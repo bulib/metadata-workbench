@@ -39,7 +39,7 @@ def get_alma_key_from_path(apiPath, env="sandbox"):
     alma_api = "config" if ("conf/" in apiPath) else api_path_fragment
 
     try:
-        api_key = API_KEYS['alma'][alma_api][env]
+        api_key = API_KEYS["alma"][alma_api][env]
     except KeyError:
         print("invalid key '" + alma_api + "'. defaulting to 'bibs' instead:")
         api_key = API_KEYS["alma"]["bibs"][env]
@@ -182,7 +182,7 @@ class Alma:
             holdings_id
             limit (the string representation of the maximum number of records to be returned)
             offset (the string representation of the offset in the record list to begin returning records)
-        """''
+        """
         path = '/bibs/{mms_id}/holdings/{holding_id}/items'.format(mms_id=mms_id, holding_id=holdings_id)
         queryParams = {
             "limit": limit,
@@ -343,7 +343,7 @@ def sort_marc_tags(record):
 
 
 def make_field(d, subfields):
-    """paramter d is a dictionary carrying the values for the marc field
+    """parameter d is a dictionary carrying the values for the marc field
     parameter subfields is a list of dicts carrying the values for the subfields"""
     if len(subfields) > 0:
         f = etree.Element('datafield')
