@@ -14,6 +14,18 @@ from services import API_KEYS
 # helpful reused variables
 HTTP_TOO_MANY_REQUESTS = 429
 CONTENT_TYPE_XML = {'Content-Type': 'application/xml'}
+RIGHTS_DICTIONARY = {
+    "pd": "Public Domain : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.",
+    "pdus": "Public Domain (US) : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission in the U.S.",
+    "cc-by-nc-nd-3.0": "This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-NoDerivatives license.",
+    "cc-by-nc-nd-4.0": "This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-NoDerivatives license.",
+    "cc-by-nc-3.0": "This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial license.",
+    "cc-by-nc-4.0": "This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-ShareAlike license.",
+    "cc-by-nc-sa-4.0": "This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-ShareAlike license.",
+    "cc-by-nc-sa-3.0": "This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-ShareAlike license.",
+    "cc-by-3.0": "This work is protected by copyright law, but made available under a Creative Commons Attribution license.",
+    "cc-by-4.0": "This work is protected by copyright law, but made available under a Creative Commons Attribution license."
+}
 
 
 def get_alma_key_from_path(apiPath, env="sandbox"):
@@ -30,7 +42,7 @@ def get_alma_key_from_path(apiPath, env="sandbox"):
         api_key = API_KEYS['alma'][alma_api][env]
     except KeyError:
         print("invalid key '" + alma_api + "'. defaulting to 'bibs' instead:")
-        api_key = API_KEYS['alma']["bibs"][env]
+        api_key = API_KEYS["alma"]["bibs"][env]
 
     return api_key
 
@@ -43,7 +55,7 @@ class Alma:
 
     def log_message(self, message, level="INFO"):
         if self.log:
-            print("{}\t|{}\t|{}:{}".format(strftime("%Y-%m-%d %H:%M:%S"), level, "ALMA", message))
+            print("{}\t|{}\t|{}:{}".format(strftime('%Y-%m-%d %H:%M:%S'), level, "ALMA", message))
 
     def log_warning(self, message):
         linebreak = "-"*len(message)+"\n"
@@ -53,12 +65,12 @@ class Alma:
 
         # build URL we'll be requesting to (note: we expect the apiPath to start with '/')
         api_key = get_alma_key_from_path(apiPath, self.env)
-        url = "https://api-na.hosted.exlibrisgroup.com/almaws/v1{api_path}?apiKey={api_key}".format(
+        url = 'https://api-na.hosted.exlibrisgroup.com/almaws/v1{api_path}?apiKey={api_key}'.format(
             api_path=apiPath, api_key=api_key
         )
         if queryParams:
             for key, value in queryParams.items():
-                url += "&{}={}".format(key, value)
+                url += '&{}={}'.format(key, value)
 
         # build request
         data = requestBody if requestBody else {}
@@ -84,7 +96,7 @@ class Alma:
             Requires mms_id
             returns the bib object in xml
         """
-        path = "/bibs/{mms_id}".format(mms_id=mms_id)
+        path = '/bibs/{mms_id}'.format(mms_id=mms_id)
         query_params = {"expand": "None"}
         response_body = self.make_request(path, query_params, headers=CONTENT_TYPE_XML)
         bib = etree.fromstring(response_body.encode())
@@ -100,8 +112,8 @@ class Alma:
         """
         path = '/bibs/{mms_id}'.format(mms_id=mms_id)
         queryParams = {
-            'validate': 'true',
-            'stale_version_check': 'false'
+            "validate": "true",
+            "stale_version_check": "false"
         }
         values = etree.tostring(bib)  # TODO resolve ValueError: 'Please use bytes input or XML fragments...
         response_body = self.make_request(path, queryParams, method=lambda: 'PUT',
@@ -157,7 +169,7 @@ class Alma:
             bib_method (Method for handling a Bib record left without any holdings: retain, delete or suppress)
         """
         path = '/bibs/{mms_id}/holdings/{holding_id}'.format(mms_id=mms_id, holding_id=holdings_id)
-        queryParams = {'bib': quote_plus(bib_method)}
+        queryParams = {"bib": quote_plus(bib_method)}
 
         response_body = self.make_request(path, queryParams=queryParams, method=lambda: 'DELETE')
         return response_body
@@ -170,13 +182,13 @@ class Alma:
             holdings_id
             limit (the string representation of the maximum number of records to be returned)
             offset (the string representation of the offset in the record list to begin returning records)
-        """
+        """''
         path = '/bibs/{mms_id}/holdings/{holding_id}/items'.format(mms_id=mms_id, holding_id=holdings_id)
         queryParams = {
-            'limit': limit,
-            'offset': offset,
-            'order_by': quote_plus(order_by),
-            'direction': quote_plus(direction)
+            "limit": limit,
+            "offset": offset,
+            "order_by": quote_plus(order_by),
+            "direction": quote_plus(direction)
         }
         response_body = self.make_request(path, queryParams, headers=CONTENT_TYPE_XML)
         items_list = etree.fromstring(response_body)
@@ -190,8 +202,8 @@ class Alma:
             limit (the string representation of the maximum number of records to be returned)
             offset (the string representation of the offset in the record list to begin returning records)
         """
-        path = "/bibs/{mms_id}/representations".format(mms_id=mms_id)
-        queryParams = {'limit': limit, 'offset': offset}
+        path = '/bibs/{mms_id}/representations'.format(mms_id=mms_id)
+        queryParams = {"limit": limit, "offset": offset}
 
         response_body = self.make_request(path, queryParams, headers=CONTENT_TYPE_XML)
         representations_list = etree.fromstring(response_body)
@@ -219,27 +231,7 @@ class Alma:
             rights - a string indicating the rights associated with the digital object
         Returns the mms_id, the OAI record identifier, and the ID for the digital representation
         """
-        if rights == 'pd':
-            rights = 'Public Domain : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.'
-        if rights == 'pdus':
-            rights = "Public Domain (US) : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission in the U.S."
-        if rights == 'cc-by-nc-nd-3.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-NoDerivatives license.'
-        if rights == 'cc-by-nc-nd-4.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-NoDerivatives license.'
-        if rights == 'cc-by-nc-3.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial license.'
-        if rights == 'cc-by-nc-4.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-ShareAlike license.'
-        if rights == 'cc-by-nc-sa-4.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-ShareAlike license.'
-        if rights == 'cc-by-nc-sa-3.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-ShareAlike license.'
-        if rights == 'cc-by-3.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution license.'
-        if rights == 'cc-by-4.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution license.'
-
+        rights = RIGHTS_DICTIONARY[rights]
         delivery_url = identifier.replace('%3A', ':').replace('%2F', '/')
         linking_parameter = identifier
         path = '/bibs/{mms_id}/representations'.format(mms_id=mms_id)
@@ -288,27 +280,7 @@ class Alma:
             rights - a string indicating the rights associated with the digital object
         Returns the mms_id, the OAI record identifier, and the ID for the digital representation
         """
-        if rights == 'pd':
-            rights = 'Public Domain : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.'
-        if rights == 'pdus':
-            rights = "Public Domain (US) : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission in the U.S."
-        if rights == 'cc-by-nc-nd-3.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-NoDerivatives license.'
-        if rights == 'cc-by-nc-nd-4.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-NoDerivatives license.'
-        if rights == 'cc-by-nc-3.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial license.'
-        if rights == 'cc-by-nc-4.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-ShareAlike license.'
-        if rights == 'cc-by-nc-sa-4.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-ShareAlike license.'
-        if rights == 'cc-by-nc-sa-3.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution-NonCommercial-ShareAlike license.'
-        if rights == 'cc-by-3.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution license.'
-        if rights == 'cc-by-4.0':
-            rights += 'This work is protected by copyright law, but made available under a Creative Commons Attribution license.'
-
+        rights = RIGHTS_DICTIONARY[rights]
         delivery_url = identifier.replace('%3A', ':').replace('%2F', '/')
         linking_parameter = identifier
         path = '/bibs/{mms_id}/representations'.format(mms_id=mms_id)
@@ -340,7 +312,7 @@ class Alma:
             delivery_url=quote_plus(delivery_url),
             yyyy_mm_dd=strftime("%Y-%m-%d")
         )
-        response_body = self.make_request(path, requestBody=values.encode("utf-8"), headers=CONTENT_TYPE_XML,
+        response_body = self.make_request(path, requestBody=values.encode('utf-8'), headers=CONTENT_TYPE_XML,
                                           method=lambda: 'POST')
         tree = etree.fromstring(response_body)
         x = tree.find('id')
@@ -430,8 +402,8 @@ if __name__ == "__main__":
 
     # test basic helper
     sample_mms_id = 99181224920001161
-    alma_service.make_request("/bibs/test")  # smoke test to see if it's
-    alma_service.make_request("/bibs/{mms_id}".format(mms_id=sample_mms_id))
+    alma_service.make_request('/bibs/test')  # smoke test to see if it's
+    alma_service.make_request('/bibs/{mms_id}'.format(mms_id=sample_mms_id))
 
     # test real bib functionality
     sample_bib_record = alma_service.get_bib_record_by_mms_id(sample_mms_id)
