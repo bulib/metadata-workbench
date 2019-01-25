@@ -1,1 +1,4 @@
+datadotworld
 lxml
+pandas
+requests
