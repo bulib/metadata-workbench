@@ -5,6 +5,7 @@
 """
 
 from services import get_api_key
+from services.alma import CONTENT_TYPE_XML
 from services.service import Service
 
 from urllib.parse import quote_plus
@@ -12,7 +13,6 @@ from lxml import etree
 from time import strftime
 
 # reused variables
-CONTENT_TYPE_XML = {'Content-Type': 'application/xml'}
 RIGHTS_DICTIONARY = {
     "pd": "Public Domain : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.",
     "pdus": "Public Domain (US) : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission in the U.S.",
