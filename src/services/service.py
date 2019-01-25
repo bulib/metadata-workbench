@@ -1,7 +1,7 @@
 from urllib.request import Request, urlopen
 from time import strftime
 
-from services import API_KEYS, HTTP_TOO_MANY_REQUESTS, HTTP_BAD_REQUEST
+from services import get_api_key, HTTP_TOO_MANY_REQUESTS, HTTP_BAD_REQUEST
 
 
 class Service:
@@ -9,6 +9,8 @@ class Service:
     def __init__(self, use_production=False, logging=True):
         self.env = "production" if use_production else "sandbox"
         self.log = logging
+        self.api_key = get_api_key("alma", "bibs", self.env)
+        self.base_url = "https://api-na.hosted.exlibrisgroup.com/almaws/v1"
 
     def log_message(self, message, level="INFO"):
         if self.log:
@@ -18,15 +20,11 @@ class Service:
         linebreak = "-"*len(message)+"\n"
         self.log_message("{0}{1}\n{0}".format(linebreak, message), level="WARN")
 
-    def get_api_key(self, platform="alma", api="bibs"):
-        return API_KEYS[platform][api][self.env]
-
     def make_request(self, apiPath, queryParams=None, method=lambda: 'GET', requestBody=None, headers=None):
 
         # build URL we'll be requesting to (note: we expect the apiPath to start with '/')
-        api_key = self.get_api_key()
-        url = 'https://api-na.hosted.exlibrisgroup.com/almaws/v1{api_path}?apiKey={api_key}'.format(
-            api_path=apiPath, api_key=api_key
+        url = '{base_url}{api_path}?apiKey={api_key}'.format(
+            base_url=self.base_url, api_path=apiPath, api_key=self.api_key
         )
         if queryParams:
             for key, value in queryParams.items():
@@ -50,6 +48,6 @@ class Service:
             self.log_warning("WARNING! Bad Request")
             self.log_message(request)
         else:
-            self.log_message("response code: " + str(response.status))
+            self.log_message("-> response code: " + str(response.status))
 
         return response_body

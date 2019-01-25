@@ -4,14 +4,15 @@
 ## EDITED: aidans (atla5) 2019-01
 """
 
-from services import CONTENT_TYPE_XML
+from services import get_api_key
 from services.service import Service
 
 from urllib.parse import quote_plus
 from lxml import etree
 from time import strftime
 
-#
+# reused variables
+CONTENT_TYPE_XML = {'Content-Type': 'application/xml'}
 RIGHTS_DICTIONARY = {
     "pd": "Public Domain : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.",
     "pdus": "Public Domain (US) : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission in the U.S.",
@@ -27,7 +28,13 @@ RIGHTS_DICTIONARY = {
 
 
 class AlmaBibs(Service):
-    """Alma is a set of tools for adding and manipulating Alma bib records"""
+    """AlmaBibs is a set of tools for adding and manipulating Alma bib records"""
+
+    def __init__(self, use_production=False, logging=True):
+        super(AlmaBibs, self).__init__(use_production, logging)  # properly subclass from Service
+        self.base_url = "https://api-na.hosted.exlibrisgroup.com/almaws/v1"
+        self.api_key = get_api_key("alma", "bibs", self.env)
+
     def get_bib_record_by_mms_id(self, mms_id):
         """get_bib_from_alma(mms_id,key):
             Requires mms_id
@@ -263,7 +270,6 @@ if __name__ == "__main__":
 
     # create the service
     alma_service = AlmaBibs(use_production=False, logging=True)
-    alma_service.start_alma_job(12)
 
     # test basic helper
     sample_mms_id = 99181224920001161
