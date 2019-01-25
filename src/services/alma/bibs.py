@@ -4,16 +4,14 @@
 ## EDITED: aidans (atla5) 2019-01
 """
 
-from urllib.request import Request, urlopen
+from services import CONTENT_TYPE_XML
+from services.service import Service
+
 from urllib.parse import quote_plus
 from lxml import etree
 from time import strftime
 
-from services import API_KEYS
-
-# helpful reused variables
-HTTP_TOO_MANY_REQUESTS = 429
-CONTENT_TYPE_XML = {'Content-Type': 'application/xml'}
+#
 RIGHTS_DICTIONARY = {
     "pd": "Public Domain : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.",
     "pdus": "Public Domain (US) : You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission in the U.S.",
@@ -28,69 +26,8 @@ RIGHTS_DICTIONARY = {
 }
 
 
-def get_alma_key_from_path(apiPath, env="sandbox"):
-    """get_key(api,platform):
-       get_key loads the api keys file and returns the requested key
-       requires two parameters passed as strings:
-       apiPath : 'analytics', 'bib', 'config', 'courses', 'users'or 'electronic'
-       environment : 'production' or 'sandbox'
-    """
-    api_path_fragment = apiPath.split("/")[1]
-    alma_api = "config" if ("conf/" in apiPath) else api_path_fragment
-
-    try:
-        api_key = API_KEYS["alma"][alma_api][env]
-    except KeyError:
-        print("invalid key '" + alma_api + "'. defaulting to 'bibs' instead:")
-        api_key = API_KEYS["alma"]["bibs"][env]
-
-    return api_key
-
-
-class Alma:
+class AlmaBibs(Service):
     """Alma is a set of tools for adding and manipulating Alma bib records"""
-    def __init__(self, use_production=False, logging=True):
-        self.env = "production" if use_production else "sandbox"
-        self.log = logging
-
-    def log_message(self, message, level="INFO"):
-        if self.log:
-            print("{}\t|{}\t|{}:{}".format(strftime('%Y-%m-%d %H:%M:%S'), level, "ALMA", message))
-
-    def log_warning(self, message):
-        linebreak = "-"*len(message)+"\n"
-        self.log_message("{0}{1}\n{0}".format(linebreak, message), level="WARN")
-
-    def make_request(self, apiPath, queryParams=None, method=lambda: 'GET', requestBody=None, headers=None):
-
-        # build URL we'll be requesting to (note: we expect the apiPath to start with '/')
-        api_key = get_alma_key_from_path(apiPath, self.env)
-        url = 'https://api-na.hosted.exlibrisgroup.com/almaws/v1{api_path}?apiKey={api_key}'.format(
-            api_path=apiPath, api_key=api_key
-        )
-        if queryParams:
-            for key, value in queryParams.items():
-                url += '&{}={}'.format(key, value)
-
-        # build request
-        data = requestBody if requestBody else {}
-        headers = headers if headers else {}
-        request = Request(url, data=data, headers=headers)
-        request.get_method = method
-
-        # send and store request
-        self.log_message("making an alma request to '" + request.full_url + "'")
-        response = urlopen(request)
-        response_body = response.read().decode(response.headers.get_content_charset())
-
-        if response.status == HTTP_TOO_MANY_REQUESTS:
-            self.log_warning("WARNING! Received a 'Too Many Requests' response from alma! Please WAIT before retrying")
-            exit(1)
-        else:
-            self.log_message("response code: " + str(response.status))
-
-        return response_body
-
     def get_bib_record_by_mms_id(self, mms_id):
         """get_bib_from_alma(mms_id,key):
             Requires mms_id
@@ -111,12 +48,12 @@ class Alma:
         returns the updated bib object in xml with validation warnings
         """
         path = '/bibs/{mms_id}'.format(mms_id=mms_id)
-        queryParams = {
+        query_params = {
             "validate": "true",
             "stale_version_check": "false"
         }
         values = etree.tostring(bib)  # TODO resolve ValueError: 'Please use bytes input or XML fragments...
-        response_body = self.make_request(path, queryParams, method=lambda: 'PUT',
+        response_body = self.make_request(path, query_params, method=lambda: 'PUT',
                                           requestBody=values, headers=CONTENT_TYPE_XML)
         bib = etree.fromstring(response_body)
         return bib
@@ -169,9 +106,9 @@ class Alma:
             bib_method (Method for handling a Bib record left without any holdings: retain, delete or suppress)
         """
         path = '/bibs/{mms_id}/holdings/{holding_id}'.format(mms_id=mms_id, holding_id=holdings_id)
-        queryParams = {"bib": quote_plus(bib_method)}
+        query_params = {"bib": quote_plus(bib_method)}
 
-        response_body = self.make_request(path, queryParams=queryParams, method=lambda: 'DELETE')
+        response_body = self.make_request(path, queryParams=query_params, method=lambda: 'DELETE')
         return response_body
 
     def get_items_from_holdings_record(self, mms_id, holdings_id, limit, offset, order_by="none", direction="desc"):
@@ -184,13 +121,13 @@ class Alma:
             offset (the string representation of the offset in the record list to begin returning records)
         """
         path = '/bibs/{mms_id}/holdings/{holding_id}/items'.format(mms_id=mms_id, holding_id=holdings_id)
-        queryParams = {
+        query_params = {
             "limit": limit,
             "offset": offset,
             "order_by": quote_plus(order_by),
             "direction": quote_plus(direction)
         }
-        response_body = self.make_request(path, queryParams, headers=CONTENT_TYPE_XML)
+        response_body = self.make_request(path, query_params, headers=CONTENT_TYPE_XML)
         items_list = etree.fromstring(response_body)
         return items_list
 
@@ -203,9 +140,9 @@ class Alma:
             offset (the string representation of the offset in the record list to begin returning records)
         """
         path = '/bibs/{mms_id}/representations'.format(mms_id=mms_id)
-        queryParams = {"limit": limit, "offset": offset}
+        query_params = {"limit": limit, "offset": offset}
 
-        response_body = self.make_request(path, queryParams, headers=CONTENT_TYPE_XML)
+        response_body = self.make_request(path, query_params, headers=CONTENT_TYPE_XML)
         representations_list = etree.fromstring(response_body)
         return representations_list
 
@@ -319,86 +256,14 @@ class Alma:
         return (mms_id, identifier, x.text)
 
 
-def sort_marc_tags(record):
-    """sort_marc_tags(record):
-    sorts the marc tags in a record in numerical order.
-    Requires:
-        marc_xml bib record
-    Returns the sorted marc_xml bib record
-    """
-    data = []
-    for elem in record.getchildren():
-        if 'leader' in elem.tag:  # == 'http://www.loc.gov/MARC21/slim}leader':
-            data.append(('000', elem))
-        else:
-            attrib = elem.attrib
-            for k, v in attrib.items():
-                if k == 'tag':
-                    data.append((v, elem))
-    data = sorted(data, key=lambda x: x[0])
-    new_rec = etree.Element('record')
-    for i in data:
-        new_rec.append(i[1])
-    return new_rec
-
-
-def make_field(d, subfields):
-    """parameter d is a dictionary carrying the values for the marc field
-    parameter subfields is a list of dicts carrying the values for the subfields"""
-    if len(subfields) > 0:
-        f = etree.Element('datafield')
-        f.attrib['tag'] = d['tag']
-        f.attrib['ind1'] = d['ind1']
-        f.attrib['ind2'] = d['ind2']
-        for sub in subfields:
-            s = etree.Element('subfield')
-            s.attrib['code'] = sub['code']
-            s.text = sub['text']
-            f.append(s)
-    elif len(subfields) == 0:
-        f = etree.Element('controlfield')
-        f.attrib['tag'] = d['tag']
-        f.attrib['ind1'] = d['ind1']
-        f.attrib['ind2'] = d['ind2']
-        f.text = d['text']
-    else:
-        print(len(subfields))
-        print(subfields)
-        pass
-    return f
-
-
-def get_marc_fields(tag, bib):
-    """get_marc_fields():
-    retrieves all instances of a marc tag from a bib record.
-    Require:
-        tag - as a string (ex: '008', '020', '650')
-        bib - the bibliographic record as an xml object
-    returns a list of xml elements containing the marc tag
-    """
-    fields = bib.findall("*/[@tag='" + tag + "']")
-    return fields
-
-
-def has_marc_field(tag, bib):
-    """has_marc_field():
-    Verifies the presence of a marc field.
-    Require:
-        tag - as a string (ex: '008', '020', '650')
-        bib - the bibliographic record as an xml object
-    returns True if the tag exists, False if the tag does not exist
-    """
-    field = bib.find("*/[@tag='" + tag + "']")
-    return type(field) == etree.Element
-
-
 if __name__ == "__main__":
     # initialize sample data
     sample_limit = 10
     sample_offset = 0
 
     # create the service
-    alma_service = Alma(use_production=False, logging=True)
+    alma_service = AlmaBibs(use_production=False, logging=True)
+    alma_service.start_alma_job(12)
 
     # test basic helper
     sample_mms_id = 99181224920001161
@@ -426,6 +291,3 @@ if __name__ == "__main__":
     # alma_service.get_representation(sample_mms_id, sample_rep_id)  # TODO invalid rep_id
     # alma_service.add_ia_representation(sample_mms_id, sample_oai_id, sample_rights)  # TODO unknown Bad Request (<representations total_record_count="0"/>)
     # alma_service.add_ht_representation(sample_mms_id, sample_oai_id, sample_rights)  # TODO unknown Bad Request (<representations total_record_count="0"/>)
-
-
-
