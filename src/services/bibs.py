@@ -4,8 +4,7 @@
 ## EDITED: aidans (atla5) 2019-01
 """
 
-from services import Service, get_api_key
-from services.alma import CONTENT_TYPE_XML
+from services import Service, CONTENT_TYPE_XML, get_api_key
 
 from urllib.parse import quote_plus
 from lxml import etree

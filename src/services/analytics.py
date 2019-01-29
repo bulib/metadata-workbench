@@ -9,13 +9,10 @@ from time import sleep
 from os.path import join
 from xml.etree import ElementTree as ET
 
-from services import Service, OUTPUT_DIRECTORY, get_api_key
-from services.alma import CONTENT_TYPE_XML
+from services import Service, CONTENT_TYPE_XML, OUTPUT_DIRECTORY, get_api_key
 
 # assorted magical
 DEFAULT_LIMIT = 1000
-NS = {'ns0': 'urn:schemas-microsoft-com:xml-analysis:rowset'}
-KEY = get_api_key("alma", "analytics", "production")
 
 # report information
 SAMPLE_DW_UPLOAD_PROJECT = "jwasys/bu-lib-stats"
@@ -32,7 +29,7 @@ class AlmaAnalytics(Service):
     def __init__(self, use_production=False, logging=True):
         super(AlmaAnalytics, self).__init__(use_production, logging)  # properly subclass from Service
         self.base_url = "https://api-na.hosted.exlibrisgroup.com/almaws/v1"
-        self.api_key = KEY
+        self.api_key = get_api_key("alma", "analytics", "production")
 
     def prepare_df_from_report_path(self, reportPath, secondsBetweenRequests=1):
         self.log_message("requesting report for the first time by the reportPath: '" + reportPath + "'...")
@@ -65,7 +62,7 @@ class AlmaAnalytics(Service):
 
     def process_completed_report_into_df(self, report):
         results = report.find('*/ResultXml')
-        rows = results.findall('*/ns0:Row', NS)
+        rows = results.findall('*/ns0:Row', {'ns0': 'urn:schemas-microsoft-com:xml-analysis:rowset'})
 
         # convert information into Pandas DataFrame
         df = DataFrame()
@@ -93,6 +90,13 @@ class AlmaAnalytics(Service):
         api_client = dw.api_client()
         # api_client.create_dataset('jwasys', title='bu-lib-stats', visibility='PRIVATE', license='Public Domain')
         api_client.upload_files(project_name, filepath)
+
+
+class PrimoAnalytics(AlmaAnalytics):
+    def __init__(self, use_production=False, logging=True):
+        super(PrimoAnalytics, self).__init__(use_production, logging)  # properly subclass from Service
+        self.base_url = "https://api-na.hosted.exlibrisgroup.com/primo/v1"
+        self.api_key = get_api_key("primo", "analytics", "production")
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ from os.path import join, abspath, dirname
 from urllib.request import Request, urlopen
 from time import strftime
 
+CONTENT_TYPE_XML = {'Content-Type': 'application/xml'}
 OUTPUT_DIRECTORY = abspath(join(dirname(__file__), "../../output"))
 
 # helpful reused variables
@@ -18,7 +19,8 @@ def construct_log_message(module, message, level="INFO"):
         message=message
     )
     if "warn" in level.lower() or "ERROR" in level.lower():
-        linebreak = "-"*len(message)
+        message_length = len(message) if "\n" not in message else len(message.split("\n")[0])
+        linebreak = "-" * message_length
         message = "{0}\n{1}\n{0}".format(linebreak, message)
 
     return message
@@ -43,7 +45,7 @@ class Service:
     def make_request(self, apiPath, queryParams=None, method='GET', requestBody=None, headers=None):
 
         # build URL we'll be requesting to (note: we expect the apiPath to start with '/')
-        url = '{base_url}{api_path}?apiKey={api_key}'.format(
+        url = '{base_url}{api_path}?apikey={api_key}'.format(
             base_url=self.base_url, api_path=apiPath, api_key=self.api_key
         )
         if queryParams:
