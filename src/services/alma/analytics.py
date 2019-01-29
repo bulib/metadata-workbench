@@ -42,7 +42,7 @@ class AlmaAnalytics(Service):
         while not is_report_finished(report):
             sleep(secondsBetweenRequests)
             resumption_token = report.find('*/ResumptionToken').text
-            self.log_message("re-requesting report via the ResumptionToken: '" + resumption_token + "'...")
+            self.log_message("re-requesting report via the ResumptionToken (starting with): '" + resumption_token[:25] + "'...")
             report = self.request_analytics_report_by_token(resumption_token)
 
         # process and convert the data into a pandas 'DataFrame' and (optionally) save to disk
@@ -66,7 +66,6 @@ class AlmaAnalytics(Service):
     def process_completed_report_into_df(self, report):
         results = report.find('*/ResultXml')
         rows = results.findall('*/ns0:Row', NS)
-        self.log_message("numRows: " + str(len(rows)))
 
         # convert information into Pandas DataFrame
         df = DataFrame()
@@ -84,7 +83,7 @@ class AlmaAnalytics(Service):
         for el in sequence:
             columns.append(el.attrib['{urn:saw-sql}columnHeading'].replace(' REPORT_SUM(', '').replace(' Name)', ''))
 
-        print('total: ', df.shape[0])
+        self.log_message("shape of output dataframe: " + str(df.shape))
         df.columns = columns
         df.head()
         return df

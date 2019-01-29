@@ -40,8 +40,8 @@ def run_weekly_circulation_statistics(output_dir=OUTPUT_DIRECTORY, upload_to_dw=
 
             if upload_to_dw:
                 alma_analytics_svc.upload_to_dw(output_report_path, "jwasys/bu-lib-stats")
-        except ValueError:
-            print(construct_log_message(SCRIPT_NAME, "Error running report : '" + input_path + "'", level="WARN"))
+        except ValueError as error:
+            print(construct_log_message(SCRIPT_NAME, "Error running report : '" + input_path + "'\n-> {}\n".format(error), level="WARN"))
 
 
 if __name__ == "__main__":
