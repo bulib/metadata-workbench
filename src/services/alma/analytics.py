@@ -34,14 +34,14 @@ class AlmaAnalytics(Service):
         self.api_key = KEY
 
     def prepare_df_from_report_path(self, reportPath, secondsBetweenRequests=2):
-        self.log_message("requesting report for the first time by the reportPath")
+        self.log_message("requesting report for the first time by the reportPath: '" + reportPath + "'...")
         report = self.request_analytics_report_by_path(reportPath)
 
         # if the report isn't finished, use its 'ResumptionToken' to keep re-asking about it until it is
         while not is_report_finished(report):
             sleep(secondsBetweenRequests)
-            self.log_message("re-requesting report via the 'ResumptionToken'...")
             resumption_token = report.find('*/ResumptionToken').text
+            self.log_message("re-requesting report via the ResumptionToken: '" + resumption_token + "'...")
             report = self.request_analytics_report_by_token(resumption_token)
 
         # process and convert the data into a pandas 'DataFrame' and (optionally) save to disk
@@ -73,7 +73,6 @@ class AlmaAnalytics(Service):
         for row in rows:
             for col in row.getchildren():
                 row_dict[col.tag[-7:]] = col.text
-            row_dict
             df = df.append(row_dict, ignore_index=True)
 
         columns = []
@@ -88,11 +87,11 @@ class AlmaAnalytics(Service):
         df.head()
         return df
 
-    def upload(self, dw):
+    def upload_to_dw(self, filepath, project_name):
+        dw = "placeholder"  # TODO: resolve 'datadotworld' import error
         api_client = dw.api_client()
-        api_client.create_dataset('jwasys', title='bu-lib-stats', visibility='PRIVATE', license='Public Domain')
-        api_client.upload_files('jwasys/bu-lib-stats', ['open_url_request_stats.tsv', 'circ_stats.tsv',
-                                                        'open_url_article_stats.tsv', 'open_url_title_stats.tsv'])
+        # api_client.create_dataset('jwasys', title='bu-lib-stats', visibility='PRIVATE', license='Public Domain')
+        api_client.upload_files(project_name, filepath)
 
 
 if __name__ == "__main__":

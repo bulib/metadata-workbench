@@ -4,6 +4,21 @@ from time import strftime
 from services import get_api_key, HTTP_TOO_MANY_REQUESTS, HTTP_BAD_REQUEST
 
 
+def construct_log_message(module, message, level="INFO"):
+    """prepare a formatted log message with timestamp, originating method, and log level"""
+    message = "{timestamp} | {module_name} [{level}] | {message}".format(
+        timestamp=strftime('%Y-%m-%d %H:%M:%S'),
+        module_name=module,
+        level=level,
+        message=message
+    )
+    if "warn" in level.lower() or "ERROR" in level.lower():
+        linebreak = "-"*len(message)
+        message = "{0}\n{1}\n{0}".format(linebreak, message)
+
+    return message
+
+
 class Service:
 
     def __init__(self, use_production=False, logging=True):
@@ -14,11 +29,11 @@ class Service:
 
     def log_message(self, message, level="INFO"):
         if self.log:
-            print("{}\t|\t{}\t|{}".format(strftime('%Y-%m-%d %H:%M:%S'), level, message))
+            message_prefix = self.__class__.__name__
+            print(construct_log_message(message_prefix, message, level=level))
 
     def log_warning(self, message):
-        linebreak = "-"*len(message)+"\n"
-        self.log_message("{0}{1}\n{0}".format(linebreak, message), level="WARN")
+        self.log_message(message, level="WARN")
 
     def make_request(self, apiPath, queryParams=None, method=lambda: 'GET', requestBody=None, headers=None):
 

@@ -1,5 +1,7 @@
+from services import OUTPUT_DIRECTORY
 from services.alma.analytics import AlmaAnalytics
-from os import path
+from services.service import construct_log_message
+from os.path import abspath, join, basename
 
 REPORTS_DICTIONARY = {
     "circulation_stats": {
@@ -20,12 +22,22 @@ REPORTS_DICTIONARY = {
     }
 }
 
+# name of the current script, for use in logging
+SCRIPT_NAME = basename(__file__)
 
-def run_weekly_circulation_statistics(upload_directory):
+
+def run_weekly_circulation_statistics(output_dir=OUTPUT_DIRECTORY):
     alma_analytics_svc = AlmaAnalytics(use_production=True)
 
     for report in REPORTS_DICTIONARY:
-        report_response_data = alma_analytics_svc.prepare_df_from_report_path(REPORTS_DICTIONARY[report]["path"])
-        output_path = path.join(upload_directory, REPORTS_DICTIONARY[report]["output"])
-        report_response_data.to_csv(output_path, sep='\t')
+        input_path = REPORTS_DICTIONARY[report]["path"]
+        print(construct_log_message(SCRIPT_NAME, "running report for output: " + input_path))
+        report_response_data = alma_analytics_svc.prepare_df_from_report_path(input_path)
 
+        output_report_path = abspath(join(output_dir, REPORTS_DICTIONARY[report]["output"]))
+        report_response_data.to_csv(output_report_path, sep='\t')
+        alma_analytics_svc.upload_to_dw(output_report_path, "jwasys/bu-lib-stats")
+
+
+if __name__ == "__main__":
+    run_weekly_circulation_statistics(OUTPUT_DIRECTORY)

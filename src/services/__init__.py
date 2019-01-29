@@ -1,3 +1,7 @@
+from os import getcwd
+from os.path import join
+
+OUTPUT_DIRECTORY = join(getcwd(), "../output")
 
 # helpful reused variables
 HTTP_TOO_MANY_REQUESTS = 429
