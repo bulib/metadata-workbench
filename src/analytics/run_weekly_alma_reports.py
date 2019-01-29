@@ -25,17 +25,23 @@ REPORTS_DICTIONARY = {
 SCRIPT_NAME = basename(__file__)
 
 
-def run_weekly_circulation_statistics(output_dir=OUTPUT_DIRECTORY):
+def run_weekly_circulation_statistics(output_dir=OUTPUT_DIRECTORY, upload_to_dw=False):
     alma_analytics_svc = AlmaAnalytics(use_production=True)
 
     for report in REPORTS_DICTIONARY:
         input_path = REPORTS_DICTIONARY[report]["path"]
         print(construct_log_message(SCRIPT_NAME, "running report for output: " + input_path))
-        report_response_data = alma_analytics_svc.prepare_df_from_report_path(input_path)
 
-        output_report_path = abspath(join(output_dir, REPORTS_DICTIONARY[report]["output"]))
-        report_response_data.to_csv(output_report_path, sep='\t')
-        alma_analytics_svc.upload_to_dw(output_report_path, "jwasys/bu-lib-stats")
+        try:
+            report_response_data = alma_analytics_svc.prepare_df_from_report_path(input_path)
+
+            output_report_path = abspath(join(output_dir, REPORTS_DICTIONARY[report]["output"]))
+            report_response_data.to_csv(output_report_path, sep='\t')
+
+            if upload_to_dw:
+                alma_analytics_svc.upload_to_dw(output_report_path, "jwasys/bu-lib-stats")
+        except ValueError:
+            print(construct_log_message(SCRIPT_NAME, "Error running report : '" + input_path + "'", level="WARN"))
 
 
 if __name__ == "__main__":

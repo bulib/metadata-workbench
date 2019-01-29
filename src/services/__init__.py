@@ -1,9 +1,8 @@
-from os import getcwd
-from os.path import join
+from os.path import join, abspath, dirname
 from urllib.request import Request, urlopen
 from time import strftime
 
-OUTPUT_DIRECTORY = join(getcwd(), "../output")
+OUTPUT_DIRECTORY = abspath(join(dirname(__file__), "../../output"))
 
 # helpful reused variables
 HTTP_TOO_MANY_REQUESTS = 429
@@ -58,7 +57,8 @@ class Service:
         request.get_method = lambda: method
 
         # send and store request
-        self.log_message("making a '{}' request to '{}'.".format(method, request.full_url))
+        url_no_args = request.full_url.split("?")[0] or request.full_url
+        self.log_message("making a '{}' request to '{}'.".format(method, url_no_args))
         response = urlopen(request)
         response_body = response.read().decode(response.headers.get_content_charset())
 

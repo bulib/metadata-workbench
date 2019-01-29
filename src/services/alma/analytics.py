@@ -34,7 +34,7 @@ class AlmaAnalytics(Service):
         self.base_url = "https://api-na.hosted.exlibrisgroup.com/almaws/v1"
         self.api_key = KEY
 
-    def prepare_df_from_report_path(self, reportPath, secondsBetweenRequests=2):
+    def prepare_df_from_report_path(self, reportPath, secondsBetweenRequests=1):
         self.log_message("requesting report for the first time by the reportPath: '" + reportPath + "'...")
         report = self.request_analytics_report_by_path(reportPath)
 
@@ -72,8 +72,9 @@ class AlmaAnalytics(Service):
         df = DataFrame()
         row_dict = {}
         for row in rows:
-            for col in row.getchildren():
+            for col in list(row):  # row.getchildren()
                 row_dict[col.tag[-7:]] = col.text
+            row_dict
             df = df.append(row_dict, ignore_index=True)
 
         columns = []
