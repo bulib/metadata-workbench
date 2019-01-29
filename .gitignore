@@ -1,5 +1,7 @@
 src/services/__init__.py
 .idea/
+.DS_Store
+output/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
