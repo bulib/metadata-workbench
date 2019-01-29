@@ -4,9 +4,8 @@
 ## EDITED: aidans (atla5) 2019-01
 """
 
-from services import get_api_key
+from services import Service, get_api_key
 from services.alma import CONTENT_TYPE_XML
-from services.service import Service
 
 from urllib.parse import quote_plus
 from lxml import etree
@@ -60,8 +59,7 @@ class AlmaBibs(Service):
             "stale_version_check": "false"
         }
         values = etree.tostring(bib)  # TODO resolve ValueError: 'Please use bytes input or XML fragments...
-        response_body = self.make_request(path, query_params, method=lambda: 'PUT',
-                                          requestBody=values, headers=CONTENT_TYPE_XML)
+        response_body = self.make_request(path, query_params, method='PUT', requestBody=values, headers=CONTENT_TYPE_XML)
         bib = etree.fromstring(response_body)
         return bib
 
@@ -100,8 +98,7 @@ class AlmaBibs(Service):
         holdings_object = etree.tostring(holdings_object)
         path = '/bibs/{mms_id}/holdings/{holding_id}'.format(mms_id=mms_id, holding_id=holdings_id)
 
-        response_body = self.make_request(path, method=lambda: 'PUT', headers=CONTENT_TYPE_XML,
-                                          requestBody=holdings_object)
+        response_body = self.make_request(path, method='PUT', headers=CONTENT_TYPE_XML, requestBody=holdings_object)
         holdings = etree.fromstring(response_body)
         return holdings
 
@@ -115,7 +112,7 @@ class AlmaBibs(Service):
         path = '/bibs/{mms_id}/holdings/{holding_id}'.format(mms_id=mms_id, holding_id=holdings_id)
         query_params = {"bib": quote_plus(bib_method)}
 
-        response_body = self.make_request(path, queryParams=query_params, method=lambda: 'DELETE')
+        response_body = self.make_request(path, queryParams=query_params, method='DELETE')
         return response_body
 
     def get_items_from_holdings_record(self, mms_id, holdings_id, limit, offset, order_by="none", direction="desc"):
@@ -208,8 +205,7 @@ class AlmaBibs(Service):
                 yyyy_mm_dd=strftime("%Y-%m-%d")
             )
 
-        response_body = self.make_request(path, method=lambda: 'POST', headers=CONTENT_TYPE_XML,
-                                          requestBody=values.encode("utf-8"))
+        response_body = self.make_request(path, method='POST', headers=CONTENT_TYPE_XML, requestBody=values.encode("utf-8"))
         tree = etree.fromstring(response_body)
         x = tree.find('id')
         return (mms_id, identifier, x.text)
@@ -256,8 +252,7 @@ class AlmaBibs(Service):
             delivery_url=quote_plus(delivery_url),
             yyyy_mm_dd=strftime("%Y-%m-%d")
         )
-        response_body = self.make_request(path, requestBody=values.encode('utf-8'), headers=CONTENT_TYPE_XML,
-                                          method=lambda: 'POST')
+        response_body = self.make_request(path, requestBody=values.encode('utf-8'), headers=CONTENT_TYPE_XML, method='POST')
         tree = etree.fromstring(response_body)
         x = tree.find('id')
         return (mms_id, identifier, x.text)

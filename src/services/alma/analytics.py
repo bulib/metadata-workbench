@@ -6,9 +6,10 @@
 # import datadotworld as dw
 from pandas import DataFrame
 from time import sleep
+from os.path import join
 from xml.etree import ElementTree as ET
 
-from services.service import Service, get_api_key
+from services import Service, OUTPUT_DIRECTORY, get_api_key
 from services.alma import CONTENT_TYPE_XML
 
 # assorted magical
@@ -19,7 +20,7 @@ KEY = get_api_key("alma", "analytics", "production")
 # report information
 SAMPLE_DW_UPLOAD_PROJECT = "jwasys/bu-lib-stats"
 SAMPLE_REPORT_PATH_IN = "/shared/Boston%20University/Reports/jwa/NumberOfLoansPast7days"
-SAMPLE_REPORT_PATH_OUT  = "circ_stats.tsv"
+SAMPLE_REPORT_PATH_OUT  = join(OUTPUT_DIRECTORY, "circ_stats.tsv")
 
 
 def is_report_finished(report):

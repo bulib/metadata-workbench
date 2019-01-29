@@ -1,6 +1,5 @@
-from services import OUTPUT_DIRECTORY
+from services import OUTPUT_DIRECTORY, construct_log_message
 from services.alma.analytics import AlmaAnalytics
-from services.service import construct_log_message
 from os.path import abspath, join, basename
 
 REPORTS_DICTIONARY = {
