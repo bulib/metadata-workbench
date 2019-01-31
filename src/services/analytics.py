@@ -4,9 +4,10 @@
 ## EDITED: aidans (atla5) 2019-01
 """
 # import datadotworld as dw
+from os.path import join
 from pandas import DataFrame
 from time import sleep
-from os.path import join
+from urllib.parse import quote_plus
 from xml.etree import ElementTree as ET
 
 from services import Service, CONTENT_TYPE_XML, OUTPUT_DIRECTORY, get_api_key
@@ -31,16 +32,16 @@ class AlmaAnalytics(Service):
         self.base_url = "https://api-na.hosted.exlibrisgroup.com/almaws/v1"
         self.api_key = get_api_key("alma", "analytics", "production")
 
-    def prepare_df_from_report_path(self, reportPath, secondsBetweenRequests=1):
+    def prepare_df_from_report_path(self, reportPath, secondsBetweenRequests=1, limit=DEFAULT_LIMIT):
         self.log_message("requesting report for the first time by the reportPath: '" + reportPath + "'...")
-        report = self.request_analytics_report_by_path(reportPath)
+        report = self.request_analytics_report_by_path(reportPath, limit=limit)
 
         # if the report isn't finished, use its 'ResumptionToken' to keep re-asking about it until it is
         while not is_report_finished(report):
             sleep(secondsBetweenRequests)
             resumption_token = report.find('*/ResumptionToken').text
             self.log_message("re-requesting report via the ResumptionToken (starting with): '" + resumption_token[:25] + "'...")
-            report = self.request_analytics_report_by_token(resumption_token)
+            report = self.request_analytics_report_by_token(resumption_token, limit=limit)
 
         # process and convert the data into a pandas 'DataFrame' and (optionally) save to disk
         output_data_frame = self.process_completed_report_into_df(report)
@@ -48,16 +49,18 @@ class AlmaAnalytics(Service):
 
     def request_analytics_report_by_path(self, pathToReport, limit=DEFAULT_LIMIT):
         api_path = '/analytics/reports'
-        query_params = {"limit": limit, "path": pathToReport}
+        query_params = {"limit": limit, "path": quote_plus(pathToReport)}
         response = self.make_request(api_path, queryParams=query_params, headers=CONTENT_TYPE_XML)
         report = ET.fromstring(response)
+        self.log_message(response)
         return report
 
-    def request_analytics_report_by_token(self, resumptionToken):
+    def request_analytics_report_by_token(self, resumptionToken, limit=DEFAULT_LIMIT):
         api_path = '/analytics/reports'
-        query_params = {"token": resumptionToken}
+        query_params = {"token": resumptionToken, "limit": limit}
         response = self.make_request(api_path, queryParams=query_params, headers=CONTENT_TYPE_XML)
         report = ET.fromstring(response)
+        self.log_message(response)
         return report
 
     def process_completed_report_into_df(self, report):

@@ -5,34 +5,38 @@ from os.path import abspath, join, basename
 
 ALMA_REPORTS = {
     "circulation_stats": {
-        "path": "/shared/Boston%20University/Reports/jwa/NumberOfLoansPast7days",
+        "path": "/shared/Boston University/Reports/jwa/NumberOfLoansPast7days",
         "output": "circ_stats.tsv"
     },
     "openurl_article": {
-        "path": "/shared/Boston%20University/Reports/jwa/Top%20ten%20article%20title%20accesses%20via%20OpenURL",
+        "path": "/shared/Boston University/Reports/jwa/Top ten article title accesses via OpenURL",
         "output": "open_url_article_stats.tsv"
     },
     "openurl_journal": {
-        "path": "/shared/Boston%20University/Reports/jwa/Top%20ten%20title%20accesses%20via%20OpenURL%20requests",
+        "path": "/shared/Boston University/Reports/jwa/Top ten title accesses via OpenURL requests",
         "output": "open_url_title_stats.tsv"
     },
     "openurl_request": {
-        "path": "/shared/Boston%20University/Reports/jwa/Top%20ten%20title%20accesses%20via%20OpenURL%20requests",
+        "path": "/shared/Boston University/Reports/jwa/Top ten title accesses via OpenURL requests",
         "output": "open_url_request_stats.tsv"
     }
 }
 
 PRIMO_API_TEST_REPORTS = {
+    "api_nui": {
+        "path": "/shared/Primo Boston University Libraries/Reports/DataStudio/nuiFacetsForGDS",
+        "output": "nui_actions_for_GDS.tsv"
+    },
     "api_actions": {
-        "path": "/shared/Primo%20Boston%20University%20Libraries/Reports/API_Tests/APITest-ActionsForGDS",
+        "path": "/shared/Primo Boston University Libraries/Reports/API_TestsAPI/Test-ActionsForGDS",
         "output": "actions_for_GDS.tsv"
     },
     "api_facets": {
-        "path": "/shared/Primo%20Boston%20University%20Libraries/Reports/API_Tests/APITest-FacetsForGDS",
+        "path": "/shared/Primo Boston University Libraries/Reports/API_Tests/APITest-FacetsForGDS",
         "output": "facets_for_GDS.tsv"
     },
     "api_tabs": {
-        "path": "/shared/Primo%20Boston%20University%20Libraries/Reports/API_Tests/APITest-Tabs",
+        "path": "/shared/Primo Boston University Libraries/Reports/API_Tests/APITest-Tabs",
         "output": "tabs_for_GDS.tsv"
     }
 }
@@ -44,13 +48,13 @@ SCRIPT_NAME = basename(__file__)
 def run_reports_from_dictionary(service, reports_dict, project_id="jwasys/bu-lib-stats", output_dir=OUTPUT_DIRECTORY, upload_upon_completion=False):
     try:
         makedirs(output_dir)
-    except FileExistsError as fee:
-        service.log_message("directory already existed! " + str(fee))
+    except FileExistsError:
+        pass  # directory already existed
 
     for report in reports_dict:
         input_path = reports_dict[report]["path"]
         output_filename = reports_dict[report]["output"]
-        service.log_message(SCRIPT_NAME, "running report for output: '" + output_filename + "'")
+        print(construct_log_message(SCRIPT_NAME, "running report for output: '" + output_filename + "'"))
 
         try:
             report_response_data = service.prepare_df_from_report_path(input_path)
