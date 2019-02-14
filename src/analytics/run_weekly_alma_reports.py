@@ -7,6 +7,12 @@ from os.path import abspath, join, basename
 SCRIPT_NAME = basename(__file__)
 
 
+def log_report_complete(output_dir):
+    message = construct_log_message(SCRIPT_NAME, "Reports created and available at '" + output_dir + "'.")
+    linebreak = "-"*len(message)
+    print("\n\n{0}\n\n{1}\n\n{0}\n\n".format(linebreak, message))
+
+
 def run_reports_from_dictionary(service, reports_dict, project_id="jwasys/bu-lib-stats", output_dir=OUTPUT_DIRECTORY, upload_upon_completion=False):
     try:
         makedirs(output_dir)
@@ -51,6 +57,7 @@ def run_weekly_circulation_statistics():
     alma_analytics_svc = AlmaAnalytics(use_production=True)
     output_directory = join(OUTPUT_DIRECTORY, "alma/")
     run_reports_from_dictionary(alma_analytics_svc, alma_circulation_reports, output_dir=output_directory)
+    log_report_complete(output_directory)
 
 
 def run_monthly_primo_api_tests():
@@ -75,6 +82,7 @@ def run_monthly_primo_api_tests():
     primo_analytics_svc = PrimoAnalytics(use_production=True)
     output_directory = join(OUTPUT_DIRECTORY, "primo/api_tests/")
     run_reports_from_dictionary(primo_analytics_svc, primo_api_test_reports, output_dir=output_directory)
+    log_report_complete(output_directory)
 
 
 if __name__ == "__main__":

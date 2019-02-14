@@ -14,6 +14,7 @@ from services import Service, CONTENT_TYPE_XML, OUTPUT_DIRECTORY, get_api_key
 
 # assorted magical
 DEFAULT_LIMIT = 1000
+PRINT_REPORT_UPON_COMPLETION = False
 
 # report information
 SAMPLE_DW_UPLOAD_PROJECT = "jwasys/bu-lib-stats"
@@ -52,7 +53,9 @@ class AlmaAnalytics(Service):
         query_params = {"limit": limit, "path": quote_plus(pathToReport)}
         response = self.make_request(api_path, queryParams=query_params, headers=CONTENT_TYPE_XML)
         report = ET.fromstring(response)
-        self.log_message(response)
+
+        message = response if PRINT_REPORT_UPON_COMPLETION else "report successfully obtained by path"
+        self.log_message(message)
         return report
 
     def request_analytics_report_by_token(self, resumptionToken, limit=DEFAULT_LIMIT):
@@ -60,7 +63,9 @@ class AlmaAnalytics(Service):
         query_params = {"token": resumptionToken, "limit": limit}
         response = self.make_request(api_path, queryParams=query_params, headers=CONTENT_TYPE_XML)
         report = ET.fromstring(response)
-        self.log_message(response)
+
+        message = response if PRINT_REPORT_UPON_COMPLETION else "report successfully obtained by path"
+        self.log_message(message)
         return report
 
     def process_completed_report_into_df(self, report):

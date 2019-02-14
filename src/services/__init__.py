@@ -1,4 +1,5 @@
 from os.path import join, abspath, dirname
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from time import strftime
 
@@ -61,17 +62,20 @@ class Service:
         # send and store request
         url_no_args = request.full_url.split("?")[0] or request.full_url
         self.log_message("making a '{}' request to '{}'.".format(method, url_no_args))
-        response = urlopen(request)
-        response_body = response.read().decode(response.headers.get_content_charset())
+        try:
+            response = urlopen(request)
+            response_body = response.read().decode(response.headers.get_content_charset())
 
-        if response.status == HTTP_TOO_MANY_REQUESTS:
-            self.log_warning("WARNING! Received a 'Too Many Requests' response from alma! Please WAIT before retrying")
-            exit(1)
-        elif response.status == HTTP_BAD_REQUEST:
-            self.log_warning("WARNING! Bad Request")
-            self.log_message(request)
-        else:
-            self.log_message("-> response code: " + str(response.status))
+            if response.status == HTTP_TOO_MANY_REQUESTS:
+                self.log_warning("WARNING! Received a 'Too Many Requests' response from alma! Please WAIT before retrying")
+                exit(1)
+            elif response.status == HTTP_BAD_REQUEST:
+                self.log_warning("WARNING! Bad Request")
+                self.log_message(request)
+            else:
+                self.log_message("-> response code: " + str(response.status))
+        except HTTPError as httpError:
+            self.log_warning("ERROR received making request: '" + request.full_url + "'!\n" + httpError)
 
         return response_body
 
