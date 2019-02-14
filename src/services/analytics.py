@@ -64,7 +64,7 @@ class AlmaAnalytics(Service):
         response = self.make_request(api_path, queryParams=query_params, headers=CONTENT_TYPE_XML)
         report = ET.fromstring(response)
 
-        message = response if PRINT_REPORT_UPON_COMPLETION else "report successfully obtained by path"
+        message = response if PRINT_REPORT_UPON_COMPLETION else "report successfully obtained by token"
         self.log_message(message)
         return report
 
