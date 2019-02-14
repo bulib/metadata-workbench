@@ -101,6 +101,25 @@ class PrimoAnalytics(AlmaAnalytics):
         self.base_url = "https://api-na.hosted.exlibrisgroup.com/primo/v1"
         self.api_key = get_api_key("primo", "analytics", "production")
 
+    def prepare_df_from_report_path(self, reportPath, secondsBetweenRequests=3, limit=25):
+        self.log_message("requesting report for the first time by the reportPath: '" + reportPath + "'...")
+        report = self.request_analytics_report_by_path(reportPath, limit=limit)
+
+        # if the report isn't finished, use its 'ResumptionToken' to keep re-asking about it until it is
+        while not is_report_finished(report):
+            sleep(secondsBetweenRequests)
+            try:
+                resumption_token = report.find('*/ResumptionToken').text
+                self.log_message("re-requesting report via the ResumptionToken (starting with): '" + resumption_token[:25] + "'...")
+                report = self.request_analytics_report_by_token(resumption_token)
+            except AttributeError:
+                self.log_message("re-requesting report via the reportPath (primo): '" + reportPath + "'...")
+                report = self.request_analytics_report_by_path(reportPath, limit=limit)
+
+        # process and convert the data into a pandas 'DataFrame' and (optionally) save to disk
+        output_data_frame = self.process_completed_report_into_df(report)
+        return output_data_frame
+
 
 if __name__ == "__main__":
     alma_analytics_svc = AlmaAnalytics(use_production=True)
