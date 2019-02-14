@@ -1,7 +1,8 @@
 from os.path import join, abspath, dirname
+from services.secrets import API_KEYS
+from time import strftime
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
-from time import strftime
 
 CONTENT_TYPE_XML = {'Content-Type': 'application/xml'}
 OUTPUT_DIRECTORY = abspath(join(dirname(__file__), "../../output"))
