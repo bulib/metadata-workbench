@@ -32,9 +32,13 @@ $ pip install -r requirements.txt
 
 Most of the APIs we use require API keys that are sent in some form or fashion with the request. 
 
-In order to keep these keys private, we store them in a `secrets.py` file that we don't include in the public
-  git repository. This file should contain the variable `API_KEYS` consisting of what looks like a 
-  `json` object (it's a [python 'dictionary'](https://docs.python.org/3/library/stdtypes.html#dictionary-view-objects))
+1] create a new `secrets.py` file in the `src/services` directory.
+
+
+> _note: This file should automatically be ignored by the source control (via `.gitignore`) and should never be committed to the 
+  git repository in order for our private keys to stay private._
+  
+2] create a new `API_KEYS` with the following content (it's a [python 'dictionary'](https://docs.python.org/3/library/stdtypes.html#dictionary-view-objects))
   
 ```python
 # src/services/secrets.py
@@ -61,12 +65,21 @@ API_KEYS = {
 }
 ```
 
-The values to use for the Alma and Primo APIs can be found on the exlibris developer network at My APIs > [Manage API KEYs](https://developers.exlibrisgroup.com/manage/keys/]. 
+3] Replace `<API_KEY_*>` values with their associated keys from each API provider. 
 
-_note: You can see this variable being imported and used in `src/services/__init__.py`:_
-```python 
-from services.secrets import API_KEYS
-...
-def get_api_key(platform="alma", api="bibs", env="sandbox"):
-    return API_KEYS[platform][api][env]
+- The Alma and Primo APIs can be found on the exlibris developer network at My APIs > [Manage API KEYs](https://developers.exlibrisgroup.com/manage/keys/). 
+
+>note: You can see this variable being imported and used in `src/services/__init__.py`:_
+>```python 
+>from services.secrets import API_KEYS
+>...
+>def get_api_key(platform="alma", api="bibs", env="sandbox"):
+>    return API_KEYS[platform][api][env]
+>```
+
+4] To ensure you have everything set up correctly, right click on `setup_checker.py` and click "Run" (or run the following command). 
+   It will let you know if any part of your setup is obviously incorrect.
+   
+```bash
+$ python src/setup_checker.py
 ```

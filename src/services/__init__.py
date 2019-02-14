@@ -1,8 +1,12 @@
 from os.path import join, abspath, dirname
-from services.secrets import API_KEYS
 from time import strftime
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+
+try:
+    from services.secrets import API_KEYS
+except (ImportError, NameError):
+    pass
 
 CONTENT_TYPE_XML = {'Content-Type': 'application/xml'}
 OUTPUT_DIRECTORY = abspath(join(dirname(__file__), "../../output"))
@@ -33,8 +37,8 @@ class Service:
     def __init__(self, use_production=False, logging=True):
         self.env = "production" if use_production else "sandbox"
         self.log = logging
-        self.api_key = get_api_key("alma", "bibs", self.env)
-        self.base_url = "https://api-na.hosted.exlibrisgroup.com/almaws/v1"
+        self.api_key = get_api_key("alma", "bibs", self.env, notify_empty=logging)
+        self.base_url = "https://www.google.com/"
 
     def log_message(self, message, level="INFO"):
         if self.log:
@@ -44,7 +48,7 @@ class Service:
     def log_warning(self, message):
         self.log_message(message, level="WARN")
 
-    def make_request(self, apiPath, queryParams=None, method='GET', requestBody=None, headers=None):
+    def make_request(self, apiPath="", queryParams=None, method='GET', requestBody=None, headers=None):
 
         # build URL we'll be requesting to (note: we expect the apiPath to start with '/')
         url = '{base_url}{api_path}?apikey={api_key}'.format(
@@ -75,11 +79,16 @@ class Service:
                 self.log_message(request)
             else:
                 self.log_message("-> response code: " + str(response.status))
+
+            return response_body
         except HTTPError as httpError:
-            self.log_warning("ERROR received making request: '" + request.full_url + "'!\n" + httpError)
-
-        return response_body
+            self.log_warning("ERROR received making request: '" + request.full_url + "'!\n" + httpError.msg)
 
 
-def get_api_key(platform="alma", api="bibs", env="sandbox"):
-    return API_KEYS[platform][api][env]
+def get_api_key(platform="alma", api="bibs", env="sandbox", notify_empty=True):
+    try:
+        return API_KEYS[platform][api][env]
+    except NameError:
+        if notify_empty:
+            print(construct_log_message("services/__init__.py", "unable to acquire API", "WARN"))
+        return ""
