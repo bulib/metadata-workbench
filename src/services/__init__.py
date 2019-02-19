@@ -4,7 +4,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 try:
-    from services.secrets import API_KEYS
+    from src.services.secrets import API_KEYS
 except (ImportError, NameError):
     pass
 
