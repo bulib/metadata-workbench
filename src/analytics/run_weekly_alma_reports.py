@@ -1,5 +1,6 @@
-from services import OUTPUT_DIRECTORY, construct_log_message
-from services.analytics import AlmaAnalytics, PrimoAnalytics
+from src.services import OUTPUT_DIRECTORY, construct_log_message
+from src.services.analytics import AlmaAnalytics, PrimoAnalytics
+
 from os import makedirs
 from os.path import abspath, join, basename
 

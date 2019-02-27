@@ -10,7 +10,7 @@ from time import sleep
 from urllib.parse import quote_plus
 from xml.etree import ElementTree as ET
 
-from services import Service, CONTENT_TYPE_XML, OUTPUT_DIRECTORY, get_api_key
+from src.services import Service, CONTENT_TYPE_XML, OUTPUT_DIRECTORY, get_api_key
 
 # assorted magical
 DEFAULT_LIMIT = 1000
@@ -19,7 +19,7 @@ PRINT_REPORT_UPON_COMPLETION = False
 # report information
 SAMPLE_DW_UPLOAD_PROJECT = "jwasys/bu-lib-stats"
 SAMPLE_REPORT_PATH_IN = "/shared/Boston%20University/Reports/jwa/NumberOfLoansPast7days"
-SAMPLE_REPORT_PATH_OUT  = join(OUTPUT_DIRECTORY, "circ_stats.tsv")
+SAMPLE_REPORT_PATH_OUT = join(OUTPUT_DIRECTORY, "circ_stats.tsv")
 
 
 def is_report_finished(report):
