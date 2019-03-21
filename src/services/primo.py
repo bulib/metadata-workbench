@@ -2,13 +2,47 @@
 ## classes and functions for working with Primo
 ## jwammerman
 ## September 2019
+## CREATED: jwammerman (jwacooks) 2018-09
+## EDITED: aidans (atla5) 2019-03
 """
 
 from urllib.request import Request, urlopen
 from urllib.parse import quote_plus
 
+from src.services import Service, CONTENT_TYPE_JSON
 
-class Primo:
+INSTITUTION_CODE = "BOSU"
+
+
+class PrimoSearch(Service):
+
+    def __init__(self, use_production=True, logging=True):
+        super(PrimoSearch, self).__init__(use_production, logging)
+        self.base_url = "https://api-na.hosted.exlibrisgroup.com/primo/v1"
+
+    def get_jwt(self, view_name="BU", language="en_US"):
+        api_path = '/jwt/{institution}'.format(institution=INSTITUTION_CODE)
+        query_parameters = {
+            'vid': view_name,
+            'lang': language
+        }
+        response_body = self.make_request(api_path, query_parameters, headers=CONTENT_TYPE_JSON)
+        return response_body
+
+    def perform_a_search(self, query, view_id="BU", search_scope="default_scope"):
+        api_path = '/search'
+        query_parameters = {
+            'q': query,
+            'vid': view_id,
+            'scope': search_scope,
+            'tab': "default_tab",
+            'inst': INSTITUTION_CODE
+        }
+        response = self.make_request(api_path, query_parameters, headers=CONTENT_TYPE_JSON)
+        return response
+
+
+class Primo():
     '''
     Primo is a set of tools to search Primo records
     '''
@@ -17,7 +51,7 @@ class Primo:
         pass
         return
 
-    def build_url(search_string, bulkSize):
+    def build_url(self, search_string, bulkSize):
         '''
         Function: build_url
 
@@ -40,7 +74,7 @@ class Primo:
         url = url_base + query_Params1 + quote_plus(search_string.replace('  ', ' ')) + query_Params2 + query_Params3
         return (url)
 
-    def get_primo_results(url):
+    def get_primo_results(self, url):
         '''get_primo_results executes the search and returns the response'''
         request = Request(url)
         try:
@@ -50,7 +84,7 @@ class Primo:
 
         return response_body
 
-    def get_primo_json(json_str):
+    def get_primo_json(self, json_str):
         '''get_primo_json parses the primo result string'''
         total_hits = json_str['SEGMENTS']['JAGROOT']['RESULT']['DOCSET']['@TOTALHITS']
         if total_hits == '0':
