@@ -1,8 +1,9 @@
+from os import makedirs
+from os.path import abspath, join, basename
+
 from src.services import OUTPUT_DIRECTORY, construct_log_message
 from src.services.analytics import AlmaAnalytics, PrimoAnalytics
 
-from os import makedirs
-from os.path import abspath, join, basename
 
 # name of the current script, for use in logging
 SCRIPT_NAME = basename(__file__)
@@ -81,7 +82,7 @@ def run_monthly_primo_api_tests():
         }
     }
     primo_analytics_svc = PrimoAnalytics(use_production=True)
-    output_directory = join(OUTPUT_DIRECTORY, "primo/api_tests/")
+    output_directory = join(OUTPUT_DIRECTORY, "primo", "api_tests")
     run_reports_from_dictionary(primo_analytics_svc, primo_api_test_reports, output_dir=output_directory)
     log_report_complete(output_directory)
 
