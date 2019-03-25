@@ -29,6 +29,20 @@ class PrimoSearch(Service):
         response_body = self.make_request(api_path, query_parameters, headers=CONTENT_TYPE_JSON)
         return response_body
 
+    def get_user_jwt(self, user="enduser", user_name="Francis Bacon", user_group="group_a", on_campus=False, view_name="BU", language="en_US"):
+        api_path = '/primo/v1/userJwt'
+        payload = {
+            "viewId": view_name,
+            "institution": INSTITUTION_CODE,
+            "language": language,
+            "user": user,
+            "userName": user_name,
+            "userGroup": user_group,
+            "onCampus": "true" if on_campus else "false"
+        }
+        response_body = self.make_request(api_path, method='POST', requestBody=payload)
+        return response_body
+
     def perform_a_search(self, query, view_id="BU", search_scope="default_scope"):
         api_path = '/search'
         query_parameters = {
