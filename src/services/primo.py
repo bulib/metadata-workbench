@@ -9,7 +9,7 @@
 from urllib.request import Request, urlopen
 from urllib.parse import quote_plus
 
-from src.services import Service, CONTENT_TYPE_JSON
+from src.services import Service, CONTENT_TYPE_JSON, get_api_key
 
 INSTITUTION_CODE = "BOSU"
 
@@ -19,6 +19,7 @@ class PrimoSearch(Service):
     def __init__(self, use_production=True, logging=True):
         super(PrimoSearch, self).__init__(use_production, logging)
         self.base_url = "https://api-na.hosted.exlibrisgroup.com/primo/v1"
+        self.api_key = get_api_key("primo", "search", "production", notify_empty=True)
 
     def get_jwt(self, view_name="BU", language="en_US"):
         api_path = '/jwt/{institution}'.format(institution=INSTITUTION_CODE)
