@@ -13,7 +13,7 @@ from xml.etree import ElementTree as ET
 from src.services import Service, CONTENT_TYPE_XML, OUTPUT_DIRECTORY, get_api_key
 
 # assorted magical
-DEFAULT_LIMIT = 1000
+DEFAULT_LIMIT = 100
 PRINT_REPORT_UPON_COMPLETION = False
 
 # report information
@@ -23,7 +23,8 @@ SAMPLE_REPORT_PATH_OUT = join(OUTPUT_DIRECTORY, "circ_stats.tsv")
 
 
 def is_report_finished(report):
-    return report.find('*/IsFinished').text != 'false'
+    isFinished = report.find('*/IsFinished').text
+    return isFinished != 'false'
 
 
 class AlmaAnalytics(Service):

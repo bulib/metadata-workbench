@@ -8,7 +8,9 @@ try:
 except (ImportError, NameError):
     pass
 
+
 CONTENT_TYPE_XML = {'Content-Type': 'application/xml'}
+CONTENT_TYPE_JSON = {'Content-Type': 'application/json'}
 OUTPUT_DIRECTORY = abspath(join(dirname(__file__), "../../output"))
 
 # helpful reused variables
@@ -37,7 +39,7 @@ class Service:
     def __init__(self, use_production=False, logging=True):
         self.env = "production" if use_production else "sandbox"
         self.log = logging
-        self.api_key = get_api_key("alma", "bibs", self.env, notify_empty=logging)
+        self.api_key = ""
         self.base_url = "https://www.google.com/"
 
     def log_message(self, message, level="INFO"):
@@ -51,9 +53,9 @@ class Service:
     def make_request(self, apiPath="", queryParams=None, method='GET', requestBody=None, headers=None):
 
         # build URL we'll be requesting to (note: we expect the apiPath to start with '/')
-        url = '{base_url}{api_path}?apikey={api_key}'.format(
-            base_url=self.base_url, api_path=apiPath, api_key=self.api_key
-        )
+        url = '{base_url}{api_path}?'.format(base_url=self.base_url, api_path=apiPath)
+        if self.api_key:
+            url += 'apikey={api_key}'.format(api_key=self.api_key)
         if queryParams:
             for key, value in queryParams.items():
                 url += '&{}={}'.format(key, value)
@@ -88,7 +90,8 @@ class Service:
 def get_api_key(platform="alma", api="bibs", env="sandbox", notify_empty=True):
     try:
         return API_KEYS[platform][api][env]
-    except NameError:
+    except (NameError, KeyError) as error:
         if notify_empty:
+            print(error)
             print(construct_log_message("services/__init__.py", "unable to acquire API", "WARN"))
         return ""

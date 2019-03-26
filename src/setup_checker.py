@@ -40,6 +40,20 @@ def make_sample_call_to_service():
     sample_service.make_request()
 
 
+def make_primo_jwt_request():
+    from src.services.primo import PrimoSearch
+    primo_search_svc = PrimoSearch()
+    report_response_data = primo_search_svc.get_jwt()
+    print(report_response_data)
+
+
+def make_primo_search_request():
+    from src.services.primo import PrimoSearch
+    primo_search_svc = PrimoSearch()
+    report_response_data = primo_search_svc.perform_a_search("tocqueville")
+    print(report_response_data)
+
+
 if __name__ == "__main__":
 
     # test availability of other functions by checking log method (which we'll use later)
@@ -59,6 +73,22 @@ if __name__ == "__main__":
         try_log_message("Successfully made a dummy request to a sample service.")
     except (ImportError, NameError) as error:
         try_log_error("Unable to make a dummy request to a sample service! Please check validity of API_KEYS, internet connection, api_path")
+        print(error)
+        setup_successful = False
+
+    # try primo
+    try:
+        make_primo_jwt_request()
+        try_log_message("successfully made a JWT authentication request to primo")
+    except(ImportError) as error: 
+        print(error)
+        setup_successful = False
+
+    # try primo
+    try:
+        make_primo_search_request()
+        try_log_message("successfully searched primo!")
+    except(ImportError) as error:
         print(error)
         setup_successful = False
 
