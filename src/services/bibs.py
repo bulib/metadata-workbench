@@ -4,7 +4,7 @@
 ## EDITED: aidans (atla5) 2019-01
 """
 
-from services import Service, CONTENT_TYPE_XML, get_api_key
+from src.services import Service, CONTENT_TYPE_XML, get_api_key
 
 from urllib.parse import quote_plus
 from lxml import etree
@@ -255,6 +255,32 @@ class AlmaBibs(Service):
         tree = etree.fromstring(response_body)
         x = tree.find('id')
         return (mms_id, identifier, x.text)
+
+    def get_portfolios_from_mmsid(self, mms_id):
+        path = '/bibs/{mms_id}/portfolios'.format(mms_id=mms_id)
+        response_body = self.make_request(path, headers=CONTENT_TYPE_XML)
+
+        portfolios_xml = etree.fromstring(response_body.encode('utf-8'))
+        pos = 0
+
+        ls_portfolio_strings = []
+        while pos < len(portfolios_xml):
+            self.log_message('pos is:' + str(pos))
+            
+            collection = portfolios_xml[pos].find('./electronic_collection/id').text
+            portfolio_id = portfolios_xml[pos].find('./id').text
+            ls_portfolio_strings.append(collection+'^'+portfolio_id)
+            self.log_message("portfolio_id: " + portfolio_id)
+            
+            pos += 1
+        return ls_portfolio_strings
+
+    def get_full_portfolio(self, mms_id, portfolio_id):
+        path = '/bibs/{mms_id}/portfolios/{portfolio_id}'.format(mms_id=mms_id, portfolio_id=portfolio_id)
+        query_params = {"view": "full"}
+        response_body = self.make_request(path, queryParams=query_params, headers=CONTENT_TYPE_XML)
+        full_portfolio = etree.fromstring(response_body.encode('utf-8'))
+        return full_portfolio
 
 
 if __name__ == "__main__":
