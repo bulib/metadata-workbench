@@ -86,7 +86,9 @@ class Service:
 
             return response_body
         except HTTPError as httpError:
-            self.log_warning("ERROR received making request: '" + request.full_url + "'!\n" + httpError.msg)
+            self.log_warning("HTTPError received after making request: '{url}'!\n\tError {code} : {msg}".format(
+                url=request.full_url, code=httpError.code, msg=httpError.msg)
+            )
 
 
 def make_basic_request(url, debug=True):

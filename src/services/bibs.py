@@ -260,6 +260,8 @@ class AlmaBibs(Service):
         path = '/bibs/{mms_id}/portfolios'.format(mms_id=mms_id)
         response_body = self.make_request(path, headers=CONTENT_TYPE_XML)
 
+        if not response_body:
+            return []
         portfolios_xml = etree.fromstring(response_body.encode('utf-8'))
         pos = 0
 
