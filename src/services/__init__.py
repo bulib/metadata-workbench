@@ -1,4 +1,4 @@
-from os.path import join, abspath, dirname
+from os.path import join, abspath, dirname, basename
 from time import strftime
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -16,8 +16,12 @@ HTTP_TOO_MANY_REQUESTS = 429
 HTTP_BAD_REQUEST = 400
 
 
-def construct_log_message(module, message, level="INFO"):
+def construct_log_message(prefix, message, level="INFO"):
     """prepare a formatted log message with timestamp, originating method, and log level"""
+    try:
+        module = basename(prefix)
+    except:
+        module = prefix
     message = "{timestamp} | {module_name} [{level}] | {message}".format(
         timestamp=strftime('%Y-%m-%d %H:%M:%S'),
         module_name=module,
@@ -72,7 +76,7 @@ class Service:
             response_body = response.read().decode(response.headers.get_content_charset())
 
             if response.status == HTTP_TOO_MANY_REQUESTS:
-                self.log_warning("WARNING! Received a 'Too Many Requests' response from alma! Please WAIT before retrying")
+                self.log_warning("WARNING! Received a 'Too Many Requests' response! Please WAIT before retrying")
                 exit(1)
             elif response.status == HTTP_BAD_REQUEST:
                 self.log_warning("WARNING! Bad Request")

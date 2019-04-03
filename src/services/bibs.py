@@ -265,13 +265,10 @@ class AlmaBibs(Service):
 
         ls_portfolio_strings = []
         while pos < len(portfolios_xml):
-            self.log_message('pos is:' + str(pos))
-            
-            collection = portfolios_xml[pos].find('./electronic_collection/id').text
+            collection_id = portfolios_xml[pos].find('./electronic_collection/id').text
             portfolio_id = portfolios_xml[pos].find('./id').text
-            ls_portfolio_strings.append(collection+'^'+portfolio_id)
-            self.log_message("portfolio_id: " + portfolio_id)
-            
+            self.log_message("found portfolio '{}' from collection '{}'".format(portfolio_id, collection_id))
+            ls_portfolio_strings.append(collection_id+'^'+portfolio_id)
             pos += 1
         return ls_portfolio_strings
 
