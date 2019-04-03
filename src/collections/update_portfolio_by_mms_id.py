@@ -10,7 +10,7 @@ from os.path import join
 import re
 
 from src.services.bibs import AlmaBibs
-from src.services import OUTPUT_DIRECTORY, construct_log_message
+from src.services import OUTPUT_DIRECTORY, construct_log_message, make_basic_request
 
 # output url_status values
 STATUS_OKAY = 'DOI URL okay'
@@ -36,6 +36,13 @@ def log_message(message):
 	print(construct_log_message(__file__, message))
 
 
+def get_page_title_from_response(response):
+	soup = BeautifulSoup(response, 'html.parser')
+	htitle = soup.title.text
+	htitle = re.sub('[\r\n]', '', htitle)
+	return htitle
+
+
 alma_bibs_service = AlmaBibs(use_production=False, logging=True)
 log_message("obtaining portfolios for mms_id '" + mms_id + "'")
 
@@ -54,39 +61,25 @@ for i, x in enumerate(lis):
 		static_url = full_portfolio.find('./linking_details/static_url').text
 		static_url = static_url.replace('jkey=', '')
 
-		url_status = STATUS_OKAY
-		url_final = static_url
-		title = ""
+		# make initial request to listed 'static_url' and mark it as okay if there aren't any exceptions
+		url_status = url_final = title = ""
 		try:
-			request = Request(static_url)
-			request.get_method = lambda: 'GET'
-			response_body = urlopen(request).read()
-			soup = BeautifulSoup(response_body, 'html.parser')
-
-			htitle = soup.title.text
-			htitle = re.sub('[\r\n]', '', htitle)
-
+			response_body = make_basic_request(static_url)
+			title = get_page_title_from_response(response_body)
 			url_status = STATUS_OKAY
-			title = htitle
-	
-		except:
+
+		except:  # if that link fails, modify the url and see if that does it...
 			modified_url = static_url.replace('doi.org', 'link.springer.com/book')
 			url_final = modified_url
-	
-			try:
-				request = Request(modified_url)
-				request.get_method = lambda: 'GET'
-				response_body = urlopen(request).read()
-				soup = BeautifulSoup(response_body, 'html.parser')
 
-				htitle = soup.title.text
-				htitle = re.sub('[\r\n]', '', htitle)
-
+			try:  # if the new request succeeds, mark it as repaired
+				response_body = make_basic_request(modified_url)
+				title = get_page_title_from_response(response_body)
 				url_status = STATUS_REPAIRED
-				title = htitle
-			except:
-				url_status = STATUS_BROKEN
+
+			except:  # if the modified url _doesn't_ work, mark it as broken
 				title = ""
+				url_status = STATUS_BROKEN
 		finally:
 			csv_row = "{url_status}\t{mms_id}\t{port_id}\t{url}\t{title}\n".format(
 				url_status=url_status, mms_id=mms_id, port_id=full_port_id, url=url_final, title=title

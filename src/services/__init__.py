@@ -41,8 +41,8 @@ class Service:
     def __init__(self, use_production=False, logging=True):
         self.env = "production" if use_production else "sandbox"
         self.log = logging
-        self.api_key = get_api_key("alma", "bibs", self.env, notify_empty=logging)
-        self.base_url = "https://www.google.com/"
+        self.api_key = ""
+        self.base_url = ""
 
     def log_message(self, message, level="INFO"):
         if self.log:
@@ -87,6 +87,11 @@ class Service:
             return response_body
         except HTTPError as httpError:
             self.log_warning("ERROR received making request: '" + request.full_url + "'!\n" + httpError.msg)
+
+
+def make_basic_request(url, debug=True):
+    svc = Service(logging=debug)
+    return svc.make_request(url)
 
 
 def get_api_key(platform="alma", api="bibs", env="sandbox", notify_empty=True):
