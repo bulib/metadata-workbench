@@ -263,14 +263,14 @@ class AlmaBibs(Service):
         portfolios_xml = etree.fromstring(response_body.encode('utf-8'))
         pos = 0
 
-        ls_portfolio_strings = []
+        ls_portfolio_ids = []
         while pos < len(portfolios_xml):
             collection_id = portfolios_xml[pos].find('./electronic_collection/id').text
             portfolio_id = portfolios_xml[pos].find('./id').text
             self.log_message("found portfolio '{}' from collection '{}'".format(portfolio_id, collection_id))
-            ls_portfolio_strings.append(collection_id+'^'+portfolio_id)
+            ls_portfolio_ids.append(portfolio_id)
             pos += 1
-        return ls_portfolio_strings
+        return ls_portfolio_ids
 
     def get_full_portfolio(self, mms_id, portfolio_id):
         path = '/bibs/{mms_id}/portfolios/{portfolio_id}'.format(mms_id=mms_id, portfolio_id=portfolio_id)
