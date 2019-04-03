@@ -2,3 +2,4 @@ datadotworld
 lxml
 pandas
 requests
+beautifulsoup4
