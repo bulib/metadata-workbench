@@ -11,9 +11,15 @@ from re import sub
 from src.services.bibs import AlmaBibs
 from src.services import OUTPUT_DIRECTORY, construct_log_message, make_basic_request
 
+# settings
+REQUEST_REMOTE_UPDATE = True
+collection_id = '61777841160001161'
+service_id = '62777841150001161'
+
 # output url_status values
 STATUS_OKAY = "OKAY"  # 'DOI URL okay'
 STATUS_REPAIRED = "REPAIRED"  # 'modified URLokay'
+STATUS_FAILED = "FAILED_ATTEMPT"  # url update failed
 STATUS_BROKEN = "BROKEN"  # 'modified URL not okay'
 
 # determine output file
@@ -69,6 +75,10 @@ def process_mms_id(mms_id, csv_file):
 				title = get_page_title_from_response(response_body)
 				url_status = STATUS_REPAIRED
 
+				if REQUEST_REMOTE_UPDATE:
+					request_succeeded = alma_bibs_service.put_electronic_portfolio_update(collection_id, service_id, portfolio_id, full_portfolio)
+					url_status = STATUS_REPAIRED if request_succeeded else STATUS_FAILED
+
 			except:  # if the modified url _doesn't_ work, mark it as broken
 				title = ""
 				url_status = STATUS_BROKEN
@@ -90,8 +100,10 @@ if __name__ == "__main__":
 	csv_heading = "url_status\tmms_id\tportfolio id\turl\ttitle\n"
 	output_file.write(csv_heading)
 
-	#
+	# process a list
 	ls_mms_id = [SAMPLE_MMS_ID_OKAY, SAMPLE_MMS_ID_REPAIRED, SAMPLE_MMS_ID_BROKEN]
-	process_list_of_mms_ids(ls_mms_id)
+	# process_list_of_mms_ids(ls_mms_id, output_file)
 
+	# process single one
+	process_mms_id(SAMPLE_MMS_ID_OKAY, output_file)
 

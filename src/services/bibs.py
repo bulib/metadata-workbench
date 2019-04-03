@@ -281,6 +281,17 @@ class AlmaBibs(Service):
         full_portfolio = etree.fromstring(response_body.encode('utf-8'))
         return full_portfolio
 
+    def put_electronic_portfolio_update(self, collection_id, service_id, portfolio_id, portfolio_obj):
+        path = '/electronic/e-collections/{cid}/e-services/{sid}/portfolios/{pid}'.format(
+            cid=collection_id, sid=service_id, pid=portfolio_id
+        )
+        try:
+            response = self.make_request(path, method='PUT', headers=CONTENT_TYPE_XML, requestBody=portfolio_obj)
+            self.log_message(response)
+            return True
+        except:
+            return False
+
 
 if __name__ == "__main__":
     # initialize sample data
@@ -316,3 +327,12 @@ if __name__ == "__main__":
     # alma_service.get_representation(sample_mms_id, sample_rep_id)  # TODO invalid rep_id
     # alma_service.add_ia_representation(sample_mms_id, sample_oai_id, sample_rights)  # TODO unknown Bad Request (<representations total_record_count="0"/>)
     # alma_service.add_ht_representation(sample_mms_id, sample_oai_id, sample_rights)  # TODO unknown Bad Request (<representations total_record_count="0"/>)
+
+    mms_id = '99208472396901161'
+    collection_id = '61777841160001161'
+    service_id = '62777841150001161'
+    portfolio_id = '53878933460001161'
+    portfolio = alma_service.get_full_portfolio(mms_id, portfolio_id)
+    worked = alma_service.put_electronic_portfolio_update(collection_id, service_id, portfolio_id, portfolio)
+    msg = "SUCCESS" if worked else "NOOOOO"
+    alma_service.log_warning(msg)
