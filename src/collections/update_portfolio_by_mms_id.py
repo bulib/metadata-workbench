@@ -12,22 +12,18 @@ from src.services.bibs import AlmaBibs
 from src.services import OUTPUT_DIRECTORY, construct_log_message, make_basic_request
 
 # settings
-REQUEST_REMOTE_UPDATE = True
-collection_id = '61777841160001161'
-service_id = '62777841150001161'
+REQUEST_REMOTE_UPDATE = False
 
 # output url_status values
-STATUS_OKAY = "OKAY"  # 'DOI URL okay'
-STATUS_REPAIRED = "REPAIRED"  # 'modified URLokay'
-STATUS_FAILED = "FAILED_ATTEMPT"  # url update failed
-STATUS_BROKEN = "BROKEN"  # 'modified URL not okay'
-
-# determine output file
-output_filename = 'springer_sbox_test_output.txt'
+STATUS_OKAY = "OKAY"  # DOI URL was fine to begin with
+STATUS_TO_REPLACE = "TO_REPLACE"  # the substitute URL works and its ready to manually update
+STATUS_REPAIRED = "REPAIRED"  # successfully repaired the portfolio remotely
+STATUS_FAILED = "FAILED_ATTEMPT"  # tried to update alma with new (valid) url, but couldn't do it
+STATUS_BROKEN = "BROKEN"  # even the modified url didn't work, so it needs fixing another way
 
 # sample MMS_IDs
 SAMPLE_MMS_ID_OKAY = '99208472396901161'
-SAMPLE_MMS_ID_REPAIRED = ''
+SAMPLE_MMS_ID_REPAIRED = '99208472396401161'
 SAMPLE_MMS_ID_BROKEN = ''
 
 
@@ -64,6 +60,7 @@ def process_mms_id(mms_id, csv_file):
 		try:
 			response_body = make_basic_request(static_url)
 			title = get_page_title_from_response(response_body)
+			url_final = static_url
 			url_status = STATUS_OKAY
 
 		except:  # if that link fails, modify the url and see if that does it...
@@ -73,11 +70,19 @@ def process_mms_id(mms_id, csv_file):
 			try:  # if the new request succeeds, mark it as repaired
 				response_body = make_basic_request(modified_url)
 				title = get_page_title_from_response(response_body)
-				url_status = STATUS_REPAIRED
+				url_status = STATUS_TO_REPLACE
 
 				if REQUEST_REMOTE_UPDATE:
-					request_succeeded = alma_bibs_service.put_electronic_portfolio_update(collection_id, service_id, portfolio_id, full_portfolio)
-					url_status = STATUS_REPAIRED if request_succeeded else STATUS_FAILED
+					before = full_portfolio.find('./linking_details/static_url').text
+					full_portfolio.find('./linking_details/static_url').text = "jkey={}".format(modified_url)
+					after = full_portfolio.find('./linking_details/static_url').text
+					log_message("before: '{}', after: '{}'".format(before, after))
+
+					request_succeeded = alma_bibs_service.update_portfolio(mms_id, portfolio_id, full_portfolio)
+					if request_succeeded:
+						url_status = STATUS_REPAIRED
+					else:
+						url_status = STATUS_FAILED
 
 			except:  # if the modified url _doesn't_ work, mark it as broken
 				title = ""
@@ -93,6 +98,7 @@ def process_mms_id(mms_id, csv_file):
 if __name__ == "__main__":
 
 	# create output file
+	output_filename = 'springer_sbox_test_output.tsv'
 	output_path = join(OUTPUT_DIRECTORY, output_filename)
 	output_file = open(output_path, 'w')
 
@@ -100,10 +106,24 @@ if __name__ == "__main__":
 	csv_heading = "url_status\tmms_id\tportfolio id\turl\ttitle\n"
 	output_file.write(csv_heading)
 
+	# get input file
+	input_filename = "update-portfolio_sbox-test-set.csv"
+	input_path = join(OUTPUT_DIRECTORY, "..", "input", input_filename)
+	input_file = open(input_path, 'r')
+
+	mms_ids = []
+	first_line = True
+	for line in input_file:
+		if not first_line:
+			mms_ids.append(line.split(',')[0])
+		first_line = False
+	input_file.close()
+
 	# process a list
-	ls_mms_id = [SAMPLE_MMS_ID_OKAY, SAMPLE_MMS_ID_REPAIRED, SAMPLE_MMS_ID_BROKEN]
-	# process_list_of_mms_ids(ls_mms_id, output_file)
+	# ls_mms_id = [SAMPLE_MMS_ID_OKAY, SAMPLE_MMS_ID_REPAIRED, SAMPLE_MMS_ID_BROKEN]
+	process_list_of_mms_ids(mms_ids, output_file)
 
 	# process single one
-	process_mms_id(SAMPLE_MMS_ID_OKAY, output_file)
+	# process_mms_id(SAMPLE_MMS_ID_OKAY, output_file)
+	output_file.close()
 

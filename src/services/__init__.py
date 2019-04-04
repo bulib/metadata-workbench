@@ -52,27 +52,30 @@ class Service:
     def log_warning(self, message):
         self.log_message(message, level="WARN")
 
-    def make_request(self, apiPath="", queryParams=None, method='GET', requestBody=None, headers=None):
+    def make_request(self, apiPath="", queryParams=None, method='GET', requestBody=None, headers=None, return_whole_response=False):
 
         # build URL we'll be requesting to (note: we expect the apiPath to start with '/')
-        url = '{base_url}{api_path}?apikey={api_key}'.format(
-            base_url=self.base_url, api_path=apiPath, api_key=self.api_key
-        )
+        url = '{base_url}{api_path}'.format(base_url=self.base_url, api_path=apiPath)
+        if self.api_key:
+            url += "?apikey={key}&".format(key=self.api_key)
         if queryParams:
             for key, value in queryParams.items():
-                url += '&{}={}'.format(key, value)
+                url += '{}={}&'.format(key, value)
 
         # build request
-        data = requestBody if requestBody else {}
+        data = requestBody if requestBody is not None else {}
         headers = headers if headers else {}
         request = Request(url, data=data, headers=headers)
         request.get_method = lambda: method
 
         # send and store request
         url_no_args = request.full_url.split("?")[0] or request.full_url
-        self.log_message("making a '{}' request to '{}'.".format(method, url_no_args))
+        self.log_message("making a '{}' request to '{}'.".format(method, url))
         try:
             response = urlopen(request)
+            if return_whole_response:
+                return response
+
             response_body = response.read().decode(response.headers.get_content_charset())
 
             if response.status == HTTP_TOO_MANY_REQUESTS:
@@ -84,11 +87,12 @@ class Service:
             else:
                 self.log_message("-> response code: " + str(response.status))
 
-            return response_body
+            return response if return_whole_response else response_body
         except HTTPError as httpError:
             self.log_warning("HTTPError received after making request: '{url}'!\n\tError {code} : {msg}".format(
                 url=request.full_url, code=httpError.code, msg=httpError.msg)
             )
+            # return httpError
 
 
 def make_basic_request(url, debug=True):

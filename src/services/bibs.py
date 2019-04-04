@@ -281,16 +281,12 @@ class AlmaBibs(Service):
         full_portfolio = etree.fromstring(response_body.encode('utf-8'))
         return full_portfolio
 
-    def put_electronic_portfolio_update(self, collection_id, service_id, portfolio_id, portfolio_obj):
-        path = '/electronic/e-collections/{cid}/e-services/{sid}/portfolios/{pid}'.format(
-            cid=collection_id, sid=service_id, pid=portfolio_id
-        )
-        try:
-            response = self.make_request(path, method='PUT', headers=CONTENT_TYPE_XML, requestBody=portfolio_obj)
-            self.log_message(response)
-            return True
-        except:
-            return False
+    def update_portfolio(self, mms_id, portfolio_id, portfolio_obj):
+        path = '/bibs/{mid}/portfolios/{pid}'.format(mid=mms_id, pid=portfolio_id)
+        portfolio_xml_string = etree.tostring(portfolio_obj, encoding='utf-8')
+        response = self.make_request(path, method='PUT', headers=CONTENT_TYPE_XML, requestBody=portfolio_xml_string, return_whole_response=True)
+
+        return response and response.status
 
 
 if __name__ == "__main__":
@@ -303,11 +299,11 @@ if __name__ == "__main__":
 
     # test basic helper
     sample_mms_id = 99181224920001161
-    alma_service.make_request('/bibs/test')  # smoke test to see if it's
-    alma_service.make_request('/bibs/{mms_id}'.format(mms_id=sample_mms_id))
+    # alma_service.make_request('/bibs/test')  # smoke test to see if it's
+    # alma_service.make_request('/bibs/{mms_id}'.format(mms_id=sample_mms_id))
 
     # test real bib functionality
-    sample_bib_record = alma_service.get_bib_record_by_mms_id(sample_mms_id)
+    # sample_bib_record = alma_service.get_bib_record_by_mms_id(sample_mms_id)
     # updated_bib = alma_service.update_bib_record_by_mms_id(sample_mms_id, sample_bib)
 
     # holdings
@@ -329,10 +325,8 @@ if __name__ == "__main__":
     # alma_service.add_ht_representation(sample_mms_id, sample_oai_id, sample_rights)  # TODO unknown Bad Request (<representations total_record_count="0"/>)
 
     mms_id = '99208472396901161'
-    collection_id = '61777841160001161'
-    service_id = '62777841150001161'
     portfolio_id = '53878933460001161'
     portfolio = alma_service.get_full_portfolio(mms_id, portfolio_id)
-    worked = alma_service.put_electronic_portfolio_update(collection_id, service_id, portfolio_id, portfolio)
+    worked = alma_service.update_portfolio(mms_id, portfolio_id, portfolio)
     msg = "SUCCESS" if worked else "NOOOOO"
     alma_service.log_warning(msg)
