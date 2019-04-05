@@ -281,13 +281,6 @@ class AlmaBibs(Service):
         full_portfolio = etree.fromstring(response_body.encode('utf-8'))
         return full_portfolio
 
-    def update_portfolio(self, mms_id, portfolio_id, portfolio_obj):
-        path = '/bibs/{mid}/portfolios/{pid}'.format(mid=mms_id, pid=portfolio_id)
-        portfolio_xml_string = etree.tostring(portfolio_obj, encoding='utf-8')
-        response = self.make_request(path, method='PUT', headers=CONTENT_TYPE_XML, requestBody=portfolio_xml_string, return_whole_response=True)
-
-        return response and response.status
-
 
 if __name__ == "__main__":
     # initialize sample data
@@ -327,6 +320,3 @@ if __name__ == "__main__":
     mms_id = '99208472396901161'
     portfolio_id = '53878933460001161'
     portfolio = alma_service.get_full_portfolio(mms_id, portfolio_id)
-    worked = alma_service.update_portfolio(mms_id, portfolio_id, portfolio)
-    msg = "SUCCESS" if worked else "NOOOOO"
-    alma_service.log_warning(msg)
