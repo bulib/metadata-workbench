@@ -9,10 +9,12 @@ from os.path import join
 from re import sub
 
 from src.services.bibs import AlmaBibs
+from src.services.alma_electronic import AlmaElectronic
 from src.services import OUTPUT_DIRECTORY, construct_log_message, make_basic_request
 
 # settings
-REQUEST_REMOTE_UPDATE = False
+REQUEST_REMOTE_UPDATE = True
+USE_PRODUCTION = False
 
 # output url_status values
 STATUS_OKAY = "OKAY"  # DOI URL was fine to begin with
@@ -45,13 +47,14 @@ def process_list_of_mms_ids(ls_mms_ids, csv_file):
 
 
 def process_mms_id(mms_id, csv_file):
-	alma_bibs_service = AlmaBibs(use_production=False, logging=True)
+	alma_bibs_service = AlmaBibs(use_production=USE_PRODUCTION, logging=True)
 	log_message("obtaining portfolios for mms_id '" + mms_id + "'")
 
 	ls_portfolio_ids = alma_bibs_service.get_portfolios_from_mmsid(mms_id)
 	for portfolio_id in ls_portfolio_ids:
 		full_portfolio = alma_bibs_service.get_full_portfolio(mms_id, portfolio_id)
 
+		# get current URL from portfolio
 		static_url = full_portfolio.find('./linking_details/static_url').text
 		static_url = static_url.replace('jkey=', '')
 
@@ -73,12 +76,18 @@ def process_mms_id(mms_id, csv_file):
 				url_status = STATUS_TO_REPLACE
 
 				if REQUEST_REMOTE_UPDATE:
-					before = full_portfolio.find('./linking_details/static_url').text
+					# grab electronic_collection to get at service and collection
+					service_id = full_portfolio.find('./electronic_collection/service').text
+					collection_id = full_portfolio.find('./electronic_collection/id').text
+
+					# change the 'static_url' of the portfolio to the modified one
 					full_portfolio.find('./linking_details/static_url').text = "jkey={}".format(modified_url)
 					after = full_portfolio.find('./linking_details/static_url').text
-					log_message("before: '{}', after: '{}'".format(before, after))
+					log_message("before: '{}', after: '{}'".format(static_url, after))
 
-					request_succeeded = alma_bibs_service.update_portfolio(mms_id, portfolio_id, full_portfolio)
+					# prepare electronic service to make update request
+					alma_electronic_service = AlmaElectronic(use_production=USE_PRODUCTION)
+					request_succeeded = alma_electronic_service.update_electronic_portfolio(collection_id, service_id, portfolio_id, full_portfolio)
 					if request_succeeded:
 						url_status = STATUS_REPAIRED
 					else:
