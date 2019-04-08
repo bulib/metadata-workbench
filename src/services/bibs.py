@@ -4,7 +4,7 @@
 ## EDITED: aidans (atla5) 2019-01
 """
 
-from services import Service, CONTENT_TYPE_XML, get_api_key
+from src.services import Service, CONTENT_TYPE_XML, get_api_key
 
 from urllib.parse import quote_plus
 from lxml import etree
@@ -256,6 +256,31 @@ class AlmaBibs(Service):
         x = tree.find('id')
         return (mms_id, identifier, x.text)
 
+    def get_portfolios_from_mmsid(self, mms_id):
+        path = '/bibs/{mms_id}/portfolios'.format(mms_id=mms_id)
+        response_body = self.make_request(path, headers=CONTENT_TYPE_XML)
+
+        if not response_body:
+            return []
+        portfolios_xml = etree.fromstring(response_body.encode('utf-8'))
+        pos = 0
+
+        ls_portfolio_ids = []
+        while pos < len(portfolios_xml):
+            collection_id = portfolios_xml[pos].find('./electronic_collection/id').text
+            portfolio_id = portfolios_xml[pos].find('./id').text
+            self.log_message("found portfolio '{}' from collection '{}'".format(portfolio_id, collection_id))
+            ls_portfolio_ids.append(portfolio_id)
+            pos += 1
+        return ls_portfolio_ids
+
+    def get_full_portfolio(self, mms_id, portfolio_id):
+        path = '/bibs/{mms_id}/portfolios/{portfolio_id}'.format(mms_id=mms_id, portfolio_id=portfolio_id)
+        query_params = {"view": "full"}
+        response_body = self.make_request(path, queryParams=query_params, headers=CONTENT_TYPE_XML)
+        full_portfolio = etree.fromstring(response_body.encode('utf-8'))
+        return full_portfolio
+
 
 if __name__ == "__main__":
     # initialize sample data
@@ -267,11 +292,11 @@ if __name__ == "__main__":
 
     # test basic helper
     sample_mms_id = 99181224920001161
-    alma_service.make_request('/bibs/test')  # smoke test to see if it's
-    alma_service.make_request('/bibs/{mms_id}'.format(mms_id=sample_mms_id))
+    # alma_service.make_request('/bibs/test')  # smoke test to see if it's
+    # alma_service.make_request('/bibs/{mms_id}'.format(mms_id=sample_mms_id))
 
     # test real bib functionality
-    sample_bib_record = alma_service.get_bib_record_by_mms_id(sample_mms_id)
+    # sample_bib_record = alma_service.get_bib_record_by_mms_id(sample_mms_id)
     # updated_bib = alma_service.update_bib_record_by_mms_id(sample_mms_id, sample_bib)
 
     # holdings
@@ -291,3 +316,7 @@ if __name__ == "__main__":
     # alma_service.get_representation(sample_mms_id, sample_rep_id)  # TODO invalid rep_id
     # alma_service.add_ia_representation(sample_mms_id, sample_oai_id, sample_rights)  # TODO unknown Bad Request (<representations total_record_count="0"/>)
     # alma_service.add_ht_representation(sample_mms_id, sample_oai_id, sample_rights)  # TODO unknown Bad Request (<representations total_record_count="0"/>)
+
+    mms_id = '99208472396901161'
+    portfolio_id = '53878933460001161'
+    portfolio = alma_service.get_full_portfolio(mms_id, portfolio_id)

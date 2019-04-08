@@ -2,14 +2,15 @@ from src.services import OUTPUT_DIRECTORY, construct_log_message
 from src.services.analytics import AlmaAnalytics, PrimoAnalytics
 
 from os import makedirs
-from os.path import abspath, join, basename
+from os.path import abspath, join
 
-# name of the current script, for use in logging
-SCRIPT_NAME = basename(__file__)
+
+def log_message(message, level="INFO"):
+    print(construct_log_message(__file__, message, level=level))
 
 
 def log_report_complete(output_dir):
-    message = construct_log_message(SCRIPT_NAME, "Reports created and available at '" + output_dir + "'.")
+    message = construct_log_message(__file__, "Reports created and available at '" + output_dir + "'.")
     linebreak = "-"*len(message)
     print("\n\n{0}\n\n{1}\n\n{0}\n\n".format(linebreak, message))
 
@@ -23,7 +24,7 @@ def run_reports_from_dictionary(service, reports_dict, project_id="jwasys/bu-lib
     for report in reports_dict:
         input_path = reports_dict[report]["path"]
         output_filename = reports_dict[report]["output"]
-        print(construct_log_message(SCRIPT_NAME, "running report for output: '" + output_filename + "'"))
+        log_message("running report for output: '" + output_filename + "'")
 
         try:
             report_response_data = service.prepare_df_from_report_path(input_path)
@@ -33,7 +34,7 @@ def run_reports_from_dictionary(service, reports_dict, project_id="jwasys/bu-lib
             if upload_upon_completion:
                 service.upload_to_dw(output_report_path, project_id)
         except ValueError as error:
-            print(construct_log_message(SCRIPT_NAME, "Error running report : '" + input_path + "'\n-> {}\n".format(error), level="WARN"))
+            log_message("Error running report : '" + input_path + "'\n-> {}\n".format(error), level="WARN")
 
 
 def run_weekly_circulation_statistics():
@@ -55,6 +56,7 @@ def run_weekly_circulation_statistics():
             "output": "open_url_request_stats.tsv"
         }
     }
+    log_message("running weekly circulation statistics")
     alma_analytics_svc = AlmaAnalytics(use_production=True)
     output_directory = join(OUTPUT_DIRECTORY, "alma/")
     run_reports_from_dictionary(alma_analytics_svc, alma_circulation_reports, output_dir=output_directory)
@@ -80,6 +82,7 @@ def run_monthly_primo_api_tests():
             "output": "tabs_for_GDS.tsv"
         }
     }
+    log_message("running monthly primo api tests")
     primo_analytics_svc = PrimoAnalytics(use_production=True)
     output_directory = join(OUTPUT_DIRECTORY, "primo/api_tests/")
     run_reports_from_dictionary(primo_analytics_svc, primo_api_test_reports, output_dir=output_directory)
